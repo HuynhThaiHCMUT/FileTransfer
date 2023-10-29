@@ -1,0 +1,23 @@
+.sideTab:hover {
+    -fx-background-color: #00000040;
+}
+
+.sideTab:pressed {
+    -fx-background-color: #00000080;
+}
+
+.sideTab:disabled {
+    -fx-background-color: #FFFFFF80;
+}
+
+.button {
+     -fx-background-color: #6c5ce7;
+}
+
+.button:hover {
+    -fx-background-color: #5548b5;
+}
+
+.button:pressed {
+    -fx-background-color: #3d3482;
+}

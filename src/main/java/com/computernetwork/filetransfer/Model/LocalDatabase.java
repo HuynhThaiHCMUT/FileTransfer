@@ -1,0 +1,63 @@
+package com.computernetwork.filetransfer.Model;
+
+import java.sql.*;
+import java.util.ArrayList;
+
+public class LocalDatabase {
+    private Connection connection;
+    public LocalDatabase() {
+        connection = null;
+        try {
+            connection = DriverManager.getConnection("jdbc:sqlite:LocalFileData.db");
+            System.out.println("Connected to the database.");
+            Statement statement = connection.createStatement();
+            String createFileTable = "CREATE TABLE IF NOT EXISTS file_data (" +
+                    "name TEXT PRIMARY KEY," +
+                    "file_size INTEGER NOT NULL," +
+                    "description TEXT NOT NULL," +
+                    "date INTEGER NOT NULL," +
+                    "file_location TEXT NOT NULL" +
+                    ")";
+            String createUserTable = "CREATE TABLE IF NOT EXISTS user_data (name TEXT PRIMARY KEY)";
+            statement.execute(createFileTable);
+            statement.execute(createUserTable);
+        } catch (SQLException e) {
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            System.exit(0);
+        }
+    }
+    public void close() {
+        try {
+            connection.close();
+            System.out.println("Connection closed");
+        } catch (SQLException e) {
+            System.err.println(e.getClass().getName() + ": " + e.getMessage());
+            System.exit(0);
+        }
+    }
+    //return the name of the user in user_data, return null if there is none
+    public String getUser() {
+        //TODO
+        return null;
+    }
+    //insert user into user_data table, replace the old user if they exist, return operation result
+    public boolean setUser(String user) {
+        //TODO
+        return false;
+    }
+    //return a list of file data saved in the file_data table
+    public ArrayList<FileData> getFileData() {
+        //TODO
+        return null;
+    }
+    //insert fileData into the file_data table, return insert result
+    public boolean insertFileData(FileData fileData) {
+        //TODO
+        return false;
+    }
+    //go through the list of file and check their file location, delete them from the file_data table if they're no longer exist
+    public ArrayList<FileData> checkFile() {
+        //TODO
+        return null;
+    }
+}

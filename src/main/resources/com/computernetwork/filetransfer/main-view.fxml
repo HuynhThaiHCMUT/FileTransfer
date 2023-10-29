@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.computernetwork.filetransfer.MainController">
+  <columnConstraints>
+    <ColumnConstraints hgrow="SOMETIMES" maxWidth="80.0" minWidth="80.0" prefWidth="80.0" />
+    <ColumnConstraints hgrow="SOMETIMES" minWidth="100.0" />
+  </columnConstraints>
+  <rowConstraints>
+    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+  </rowConstraints>
+   <children>
+      <VBox prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: linear-gradient(to bottom right,  #6c5ce7, #0984e3);">
+         <children>
+            <VBox fx:id="fileTab" alignment="CENTER" disable="true" onMouseClicked="#onFileClick" prefHeight="72.0" styleClass="sideTab">
+               <children>
+                  <FontIcon iconColor="#6200b5" iconLiteral="fa-folder" iconSize="24" text="" />
+                  <Text fill="#2d3436" strokeType="OUTSIDE" strokeWidth="0.0" text="File" textAlignment="CENTER">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Text>
+               </children>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+            </VBox>
+            <VBox fx:id="searchTab" alignment="CENTER" onMouseClicked="#onSearchClick" prefHeight="72.0" styleClass="sideTab">
+               <children>
+                  <FontIcon iconColor="#6200b5" iconLiteral="fa-search" iconSize="24" text="" />
+                  <Text fill="#2d3436" strokeType="OUTSIDE" strokeWidth="0.0" text="Search" textAlignment="CENTER">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Text>
+               </children>
+            </VBox>
+            <VBox fx:id="terminalTab" alignment="CENTER" onMouseClicked="#onTerminalClick" prefHeight="72.0" styleClass="sideTab">
+               <children>
+                  <FontIcon iconColor="#6200b5" iconLiteral="fa-terminal" iconSize="24" text="" />
+                  <Text fill="#2d3436" strokeType="OUTSIDE" strokeWidth="0.0" text="Terminal" textAlignment="CENTER">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Text>
+               </children>
+            </VBox>
+            <VBox fx:id="userTab" alignment="CENTER" onMouseClicked="#onUserClick" prefHeight="72.0" styleClass="sideTab">
+               <children>
+                  <FontIcon iconColor="#6200b5" iconLiteral="fa-user" iconSize="24" />
+                  <Text fill="#2d3436" strokeType="OUTSIDE" strokeWidth="0.0" text="User" textAlignment="CENTER">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Text>
+               </children>
+            </VBox>
+         </children>
+      </VBox>
+      <VBox fx:id="filePanel" alignment="TOP_RIGHT" style="-fx-background-color: linear-gradient(to bottom right, #a29bfe, #74b9ff);" GridPane.columnIndex="1">
+         <children>
+            <HBox>
+               <children>
+                  <TextField prefWidth="300.0" HBox.hgrow="ALWAYS">
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </TextField>
+                  <Button defaultButton="true" mnemonicParsing="false" text="Search">
+                     <graphic>
+                        <FontIcon iconLiteral="fa-search" />
+                     </graphic>
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Button defaultButton="true" mnemonicParsing="false" text="Filter">
+                     <graphic>
+                        <FontIcon iconLiteral="fa-filter" />
+                     </graphic>
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                  </Button>
+               </children>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+            </HBox>
+            <VBox style="-fx-background-color: #00000010;" VBox.vgrow="ALWAYS">
+               <VBox.margin>
+                  <Insets bottom="10.0" top="10.0" />
+               </VBox.margin>
+            </VBox>
+            <Button defaultButton="true" mnemonicParsing="false" text="Upload">
+               <graphic>
+                  <FontIcon iconLiteral="fa-upload" />
+               </graphic>
+               <font>
+                  <Font size="16.0" />
+               </font>
+            </Button>
+         </children>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+      </VBox>
+      <VBox fx:id="searchPanel" style="-fx-background-color: linear-gradient(to bottom right, #a29bfe, #74b9ff);" visible="false" GridPane.columnIndex="1">
+         <children>
+            <HBox>
+               <children>
+                  <TextField prefWidth="300.0" HBox.hgrow="ALWAYS">
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </TextField>
+                  <Button defaultButton="true" mnemonicParsing="false" text="Search">
+                     <graphic>
+                        <FontIcon iconLiteral="fa-search" />
+                     </graphic>
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Button defaultButton="true" mnemonicParsing="false" text="Filter">
+                     <graphic>
+                        <FontIcon iconLiteral="fa-filter" />
+                     </graphic>
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                  </Button>
+               </children>
+            </HBox>
+            <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: #00000010;" VBox.vgrow="ALWAYS">
+               <VBox.margin>
+                  <Insets top="10.0" />
+               </VBox.margin>
+               <children>
+                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="No matches" />
+               </children>
+            </VBox>
+         </children>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+      </VBox>
+      <VBox fx:id="terminalPanel" alignment="BOTTOM_LEFT" prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: #000000;" visible="false" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS" />
+      <VBox fx:id="userPanel" alignment="TOP_RIGHT" style="-fx-background-color: linear-gradient(to bottom right, #a29bfe, #74b9ff);" visible="false" GridPane.columnIndex="1">
+         <children>
+            <HBox>
+               <children>
+                  <TextField prefWidth="300.0" HBox.hgrow="ALWAYS">
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </TextField>
+                  <Button defaultButton="true" mnemonicParsing="false" text="Search">
+                     <graphic>
+                        <FontIcon iconLiteral="fa-search" />
+                     </graphic>
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Button defaultButton="true" mnemonicParsing="false" text="Filter">
+                     <graphic>
+                        <FontIcon iconLiteral="fa-filter" />
+                     </graphic>
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                  </Button>
+               </children>
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin>
+            </HBox>
+            <VBox style="-fx-background-color: #00000010;" VBox.vgrow="ALWAYS">
+               <VBox.margin>
+                  <Insets bottom="10.0" top="10.0" />
+               </VBox.margin>
+            </VBox>
+            <Button defaultButton="true" mnemonicParsing="false" text="Upload">
+               <graphic>
+                  <FontIcon iconLiteral="fa-upload" />
+               </graphic>
+               <font>
+                  <Font size="16.0" />
+               </font>
+            </Button>
+         </children>
+         <padding>
+            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+         </padding>
+      </VBox>
+   </children>
+</GridPane>
