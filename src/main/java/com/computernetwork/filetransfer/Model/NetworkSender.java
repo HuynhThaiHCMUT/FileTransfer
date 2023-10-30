@@ -45,11 +45,11 @@ public class NetworkSender {
                 //TODO
 
                 socket.close();
-                return null;
+                return new Respond(true, "");
             }
         };
     }
-    public Task<ObservableList<FileData>> search(String query) throws IOException {
+    public Task<ObservableList<FileData>> search(String query) {
         return new Task<ObservableList<FileData>>() {
             @Override
             protected ObservableList<FileData> call() throws Exception {
@@ -64,7 +64,7 @@ public class NetworkSender {
             }
         };
     }
-    public Task<Respond> upload(FileData file) throws IOException {
+    public Task<Respond> upload(FileData file) {
         return new Task<Respond>() {
             @Override
             protected Respond call() throws Exception {
@@ -79,7 +79,7 @@ public class NetworkSender {
             }
         };
     }
-    public Task<Respond> reportMissingFile(FileData file, String username) throws IOException {
+    public Task<Respond> reportMissingFile(FileData file, String username) {
         return new Task<Respond>() {
             @Override
             protected Respond call() throws Exception {

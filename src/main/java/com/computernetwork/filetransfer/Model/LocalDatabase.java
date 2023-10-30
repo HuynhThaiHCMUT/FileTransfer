@@ -1,7 +1,8 @@
 package com.computernetwork.filetransfer.Model;
 
+import javafx.collections.ObservableList;
+
 import java.sql.*;
-import java.util.ArrayList;
 
 public class LocalDatabase {
     private Connection connection;
@@ -10,7 +11,8 @@ public class LocalDatabase {
         System.out.println("Connected to the database.");
         Statement statement = connection.createStatement();
         String createFileTable = "CREATE TABLE IF NOT EXISTS file_data (" +
-                "name TEXT PRIMARY KEY," +
+                "id INTEGER PRIMARY KEY," +
+                "name TEXT NOT NULL," +
                 "file_size INTEGER NOT NULL," +
                 "description TEXT NOT NULL," +
                 "date INTEGER NOT NULL," +
@@ -57,7 +59,7 @@ public class LocalDatabase {
     /**
      * return a list of file data saved in the file_data table
      */
-    public ArrayList<FileData> getFileData() {
+    public ObservableList<FileData> getFileData() {
         //TODO
         return null;
     }
@@ -69,9 +71,9 @@ public class LocalDatabase {
         return false;
     }
     /**
-     * go through the list of file and check their file location, delete them from the file_data table if they're no longer exist
+     * go through the list of file and check their file location, delete them from the file_data table if they're no longer exist, return the new list
      */
-    public ArrayList<FileData> checkFile() {
+    public ObservableList<FileData> checkFile() {
         //TODO
         return null;
     }
