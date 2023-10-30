@@ -2,11 +2,14 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
@@ -23,7 +26,17 @@
    <children>
       <VBox prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: linear-gradient(to bottom right,  #6c5ce7, #0984e3);">
          <children>
-            <VBox fx:id="fileTab" alignment="CENTER" disable="true" onMouseClicked="#onFileClick" prefHeight="72.0" styleClass="sideTab">
+            <VBox fx:id="userTab" alignment="CENTER" onMouseClicked="#onUserClick" prefHeight="72.0" styleClass="sideTab">
+               <children>
+                  <FontIcon iconColor="#6200b5" iconLiteral="fa-user" iconSize="24" />
+                  <Text fill="#2d3436" strokeType="OUTSIDE" strokeWidth="0.0" text="User" textAlignment="CENTER">
+                     <font>
+                        <Font size="18.0" />
+                     </font>
+                  </Text>
+               </children>
+            </VBox>
+            <VBox fx:id="fileTab" alignment="CENTER" onMouseClicked="#onFileClick" prefHeight="72.0" styleClass="sideTab">
                <children>
                   <FontIcon iconColor="#6200b5" iconLiteral="fa-folder" iconSize="24" text="" />
                   <Text fill="#2d3436" strokeType="OUTSIDE" strokeWidth="0.0" text="File" textAlignment="CENTER">
@@ -56,19 +69,19 @@
                   </Text>
                </children>
             </VBox>
-            <VBox fx:id="userTab" alignment="CENTER" onMouseClicked="#onUserClick" prefHeight="72.0" styleClass="sideTab">
+            <VBox alignment="BOTTOM_CENTER" prefHeight="200.0" prefWidth="100.0">
                <children>
-                  <FontIcon iconColor="#6200b5" iconLiteral="fa-user" iconSize="24" />
-                  <Text fill="#2d3436" strokeType="OUTSIDE" strokeWidth="0.0" text="User" textAlignment="CENTER">
-                     <font>
-                        <Font size="18.0" />
-                     </font>
-                  </Text>
+                  <Label fx:id="loadingMessage" visible="false" />
+                  <ProgressBar fx:id="loadingProgress" prefWidth="200.0" progress="0.0" visible="false">
+                     <VBox.margin>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                     </VBox.margin>
+                  </ProgressBar>
                </children>
             </VBox>
          </children>
       </VBox>
-      <VBox fx:id="filePanel" alignment="TOP_RIGHT" style="-fx-background-color: linear-gradient(to bottom right, #a29bfe, #74b9ff);" GridPane.columnIndex="1">
+      <VBox fx:id="filePanel" alignment="TOP_RIGHT" style="-fx-background-color: linear-gradient(to bottom right, #a29bfe, #74b9ff);" visible="false" GridPane.columnIndex="1">
          <children>
             <HBox>
                <children>
@@ -169,59 +182,93 @@
          </padding>
       </VBox>
       <VBox fx:id="terminalPanel" alignment="BOTTOM_LEFT" prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: #000000;" visible="false" GridPane.columnIndex="1" GridPane.hgrow="ALWAYS" GridPane.vgrow="ALWAYS" />
-      <VBox fx:id="userPanel" alignment="TOP_RIGHT" style="-fx-background-color: linear-gradient(to bottom right, #a29bfe, #74b9ff);" visible="false" GridPane.columnIndex="1">
+      <StackPane fx:id="userPanel" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: linear-gradient(to bottom right, #a29bfe, #74b9ff);" visible="false" GridPane.columnIndex="1">
          <children>
-            <HBox>
+            <VBox fx:id="authBox" alignment="CENTER_LEFT" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="300.0" visible="false">
                <children>
-                  <TextField prefWidth="300.0" HBox.hgrow="ALWAYS">
+                  <Label fx:id="authMessage" alignment="CENTER" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="300.0" textFill="#bc0000">
                      <font>
                         <Font size="16.0" />
                      </font>
-                     <HBox.margin>
-                        <Insets right="10.0" />
-                     </HBox.margin>
+                  </Label>
+                  <Label text="Username">
+                     <font>
+                        <Font name="System Bold" size="16.0" />
+                     </font>
+                  </Label>
+                  <TextField fx:id="usernameInput" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="300.0" VBox.vgrow="NEVER">
+                     <font>
+                        <Font size="16.0" />
+                     </font>
                   </TextField>
-                  <Button defaultButton="true" mnemonicParsing="false" text="Search">
-                     <graphic>
-                        <FontIcon iconLiteral="fa-search" />
-                     </graphic>
+                  <Label text="Server IP">
+                     <font>
+                        <Font name="System Bold" size="16.0" />
+                     </font>
+                  </Label>
+                  <TextField fx:id="serverIPInput" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="300.0">
                      <font>
                         <Font size="16.0" />
                      </font>
-                     <HBox.margin>
-                        <Insets right="10.0" />
-                     </HBox.margin>
-                  </Button>
-                  <Button defaultButton="true" mnemonicParsing="false" text="Filter">
-                     <graphic>
-                        <FontIcon iconLiteral="fa-filter" />
-                     </graphic>
-                     <font>
-                        <Font size="16.0" />
-                     </font>
-                  </Button>
+                  </TextField>
+                  <HBox alignment="BOTTOM_RIGHT" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="300.0" VBox.vgrow="NEVER">
+                     <children>
+                        <Button defaultButton="true" mnemonicParsing="false" onMouseClicked="#onSignUpClick" text="Sign up">
+                           <graphic>
+                              <FontIcon iconLiteral="fa-id-card" />
+                           </graphic>
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                           <HBox.margin>
+                              <Insets right="10.0" />
+                           </HBox.margin>
+                        </Button>
+                        <Button defaultButton="true" mnemonicParsing="false" onMouseClicked="#onLoginClick" text="Login">
+                           <graphic>
+                              <FontIcon iconLiteral="fa-sign-in" />
+                           </graphic>
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </Button>
+                     </children>
+                     <VBox.margin>
+                        <Insets top="10.0" />
+                     </VBox.margin>
+                  </HBox>
                </children>
-               <VBox.margin>
-                  <Insets />
-               </VBox.margin>
-            </HBox>
-            <VBox style="-fx-background-color: #00000010;" VBox.vgrow="ALWAYS">
-               <VBox.margin>
-                  <Insets bottom="10.0" top="10.0" />
-               </VBox.margin>
             </VBox>
-            <Button defaultButton="true" mnemonicParsing="false" text="Upload">
-               <graphic>
-                  <FontIcon iconLiteral="fa-upload" />
-               </graphic>
-               <font>
-                  <Font size="16.0" />
-               </font>
-            </Button>
+            <VBox fx:id="userInfo" alignment="CENTER_LEFT" maxWidth="-Infinity" prefWidth="300.0" visible="false">
+               <children>
+                  <Label text="You are logged in as">
+                     <font>
+                        <Font name="System Bold" size="16.0" />
+                     </font>
+                  </Label>
+                  <Label fx:id="usernameLabel" alignment="CENTER" maxWidth="-Infinity" minWidth="-Infinity" prefWidth="300.0" textAlignment="CENTER">
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                  </Label>
+                  <HBox alignment="BOTTOM_RIGHT" maxWidth="-Infinity" prefWidth="300.0" VBox.vgrow="NEVER">
+                     <children>
+                        <Button defaultButton="true" mnemonicParsing="false" onMouseClicked="#onSignOutClick" text="Sign out">
+                           <graphic>
+                              <FontIcon iconLiteral="fa-sign-out" />
+                           </graphic>
+                           <font>
+                              <Font size="16.0" />
+                           </font>
+                        </Button>
+                     </children>
+                     <VBox.margin>
+                        <Insets top="10.0" />
+                     </VBox.margin>
+                  </HBox>
+               </children>
+            </VBox>
          </children>
-         <padding>
-            <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
-         </padding>
-      </VBox>
+      </StackPane>
    </children>
 </GridPane>

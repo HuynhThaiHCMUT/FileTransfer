@@ -1,39 +1,97 @@
 package com.computernetwork.filetransfer.Model;
 
+import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.*;
-import java.util.ArrayList;
 
 public class NetworkSender {
-    private Socket socket;
-    private DataInputStream istream;
-    private DataOutputStream ostream;
+    private String serverIP;
 
-    public NetworkSender(String serverIP) throws IOException {
-        socket = new Socket(serverIP, 4040);
-        istream = new DataInputStream(socket.getInputStream());
-        ostream = new DataOutputStream(socket.getOutputStream());
+    public String getServerIP() {
+        return serverIP;
     }
-    public Respond register(String username) {
-        //TODO
-        return null;
+
+    public void setServerIP(String serverIP) {
+        this.serverIP = serverIP;
     }
-    public Respond login(String username) {
-        //TODO
-        return null;
+
+    public Task<Respond> signUp(String username) {
+        return new Task<Respond>() {
+            @Override
+            protected Respond call() throws Exception {
+                Socket socket = new Socket(serverIP, 4040);
+                DataInputStream istream = new DataInputStream(socket.getInputStream());
+                DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
+
+                //TODO
+
+                socket.close();
+                return null;
+            }
+        };
     }
-    public ArrayList<FileData> search(String query) {
-        //TODO
-        return null;
+    public Task<Respond> login(String username) {
+        return new Task<Respond>() {
+            @Override
+            protected Respond call() throws Exception {
+                Socket socket = new Socket(serverIP, 4040);
+                DataInputStream istream = new DataInputStream(socket.getInputStream());
+                DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
+
+                //TODO
+
+                socket.close();
+                return null;
+            }
+        };
     }
-    public Respond upload(FileData file) {
-        //TODO
-        return null;
+    public Task<ObservableList<FileData>> search(String query) throws IOException {
+        return new Task<ObservableList<FileData>>() {
+            @Override
+            protected ObservableList<FileData> call() throws Exception {
+                Socket socket = new Socket(serverIP, 4040);
+                DataInputStream istream = new DataInputStream(socket.getInputStream());
+                DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
+
+                //TODO
+
+                socket.close();
+                return null;
+            }
+        };
     }
-    public Respond reportMissingFile(FileData file, String username) {
-        //TODO
-        return null;
+    public Task<Respond> upload(FileData file) throws IOException {
+        return new Task<Respond>() {
+            @Override
+            protected Respond call() throws Exception {
+                Socket socket = new Socket(serverIP, 4040);
+                DataInputStream istream = new DataInputStream(socket.getInputStream());
+                DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
+
+                //TODO
+
+                socket.close();
+                return null;
+            }
+        };
+    }
+    public Task<Respond> reportMissingFile(FileData file, String username) throws IOException {
+        return new Task<Respond>() {
+            @Override
+            protected Respond call() throws Exception {
+                Socket socket = new Socket(serverIP, 4040);
+                DataInputStream istream = new DataInputStream(socket.getInputStream());
+                DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
+
+                //TODO
+
+                socket.close();
+                return null;
+            }
+        };
     }
 }

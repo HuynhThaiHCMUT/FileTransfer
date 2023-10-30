@@ -22,7 +22,13 @@ public class ClientApplication extends Application {
     }
     @Override
     public void stop() {
-        controller.onClose();
+        try {
+            controller.onClose();
+        } catch (java.sql.SQLException e) {
+            System.out.println(e.getMessage());
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
     }
     public static void main(String[] args) {
         launch();
