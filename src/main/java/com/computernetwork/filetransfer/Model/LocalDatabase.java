@@ -1,8 +1,8 @@
 package com.computernetwork.filetransfer.Model;
 
-import javafx.collections.ObservableList;
-
 import java.sql.*;
+import java.util.ArrayList;
+import java.io.File;
 
 public class LocalDatabase {
     private Connection connection;
@@ -11,8 +11,7 @@ public class LocalDatabase {
         System.out.println("Connected to the database.");
         Statement statement = connection.createStatement();
         String createFileTable = "CREATE TABLE IF NOT EXISTS file_data (" +
-                "id INTEGER PRIMARY KEY," +
-                "name TEXT NOT NULL," +
+                "name TEXT PRIMARY KEY," +
                 "file_size INTEGER NOT NULL," +
                 "description TEXT NOT NULL," +
                 "date INTEGER NOT NULL," +
@@ -32,49 +31,113 @@ public class LocalDatabase {
      * return the name of the user in user_data, return null if there is none
      */
     public String getUser() {
-        //TODO
+        Statement statement = connection.createStatement();
+        ResultSet row = statement.execute("SELECT name FROM user_data");
+        String userName = row.getString("name");
+        if(!row.wasNull()) return userName;
         return null;
     }
     /**
      * insert user into user_data table, replace the old user if they exist, return operation result
      */
     public boolean setUser(String user) {
-        //TODO
-        return false;
+        Statement statement = connection.createStatement(ResultSet.CONCUR_UPDATABLE);
+        ResultSet row = statement.execute("SELECT name FROM user_data");
+        String userName = row.getString("name");
+        if(!row.wasNull()) {
+            row.updateString("name", user);
+            row.updateRow();
+        } else {
+            row.moveToInsertRow();
+            row.updateString("name", user);
+            row.insertRow();
+        }
+        return true;
     }
     /**
      * return the serverIP address in server_IP_data, return null if there is none
      */
     public String getServerIP() {
-        //TODO
+        Statement statement = connection.createStatement();
+        ResultSet row = statement.execute("SELECT name FROM server_IP_data");
+        String serverIpName = row.getString("name");
+        if(!row.wasNull()) return serverIpName;
         return null;
     }
     /**
      * insert serverIP address into server_IP_data table, replace the old serverIP address if it exist, return operation result
      */
     public boolean setServerIP(String serverIP) {
-        //TODO
-        return false;
+        Statement statement = connection.createStatement(ResultSet.CONCUR_UPDATABLE);
+        ResultSet row = statement.execute("SELECT name FROM server_IP_data");
+        String serverIpName = row.getString("name");
+        if(!row.wasNull()) {
+            row.updateString("name", serverIP);
+            row.updateRow();
+        } else {
+            row.moveToInsertRow();
+            row.updateString("name", serverIP);
+            row.insertRow();
+        }
+        return true;
     }
     /**
      * return a list of file data saved in the file_data table
      */
-    public ObservableList<FileData> getFileData() {
-        //TODO
-        return null;
+    public ArrayList<FileData> getFileData() {
+        ArrayList<FileData> fileList = new ArrayList<FileData>();
+        Statement statement = connection.createStatement();
+        ResultSet row = statement.execute("SELECT * FROM file_data");
+        while(row.next()) {
+            String name = row.getString("name");
+            Long file_size = row.getInt("file_size");
+            String description = row.getString("description");
+            // int date = row.getInt("date");
+            String file_location = row.getString("file_location");
+
+            FileData fileData = new FileData(name, file_size, description, file_location);
+
+            fileList.add(fileData);
+        }
+        return fileList;
     }
     /**
      * insert fileData into the file_data table, return insert result
      */
     public boolean insertFileData(FileData fileData) {
-        //TODO
-        return false;
+        PreparedStatement ps = connection.prepareStatement("INSERT INTO file_data VALUES (?,?,?,?,?)");
+        ps.setString(1, fileData.getName());
+        ps.setInt(2, fileData.getSize());
+        ps.setString(3, fileData.getDescription());
+        ps.setInt(4, fileData.getUploadedDate());
+        ps.setString(5, fileData.getFileLocation());
+        
+        ps.executeUpdate();
+        return true;
     }
     /**
-     * go through the list of file and check their file location, delete them from the file_data table if they're no longer exist, return the new list
+     * go through the list of file and check their file location, delete them from the file_data table if they're no longer exist
      */
-    public ObservableList<FileData> checkFile() {
-        //TODO
-        return null;
+    public ArrayList<FileData> checkFile() {
+        ArrayList<FileData> fileList = new ArrayList<FileData>();
+        Statement statement = connection.createStatement();
+        ResultSet row = statement.execute("SELECT * FROM file_data");
+        while(row.next()) {
+            String file_location = row.getString("file_location");
+            File fileLocation = new File(file_location);
+            if(fileLocation.exists()) {
+                String name = row.getString("name");
+                Long file_size = row.getInt("file_size");
+                String description = row.getString("description");
+                // int date = row.getInt("date");
+                FileData fileData = new FileData(name, file_size, description, file_location);
+                fileList.add(fileData);
+            } else {
+                PreparedStatement ps = connection.prepareStatement("DELETE FROM file_data WHERE file_location = ?");
+                ps.setString(1, file_location);
+                ps.executeUpdate();
+            }
+        }
+        return fileList;
     }
 }
