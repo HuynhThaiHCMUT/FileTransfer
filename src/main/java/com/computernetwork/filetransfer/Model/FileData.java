@@ -1,6 +1,6 @@
 package com.computernetwork.filetransfer.Model;
 
-import java.util.Date;
+import java.sql.Date;
 
 public class FileData {
     private String name;
@@ -13,7 +13,15 @@ public class FileData {
         this.name = name;
         this.size = size;
         this.description = description;
-        uploadedDate = new Date();
+        uploadedDate = new Date(new java.util.Date().getTime());
+        this.fileLocation = fileLocation;
+    }
+
+    public FileData(String name, Long size, String description, Date uploadedDate, String fileLocation) {
+        this.name = name;
+        this.size = size;
+        this.description = description;
+        this.uploadedDate = uploadedDate;
         this.fileLocation = fileLocation;
     }
 

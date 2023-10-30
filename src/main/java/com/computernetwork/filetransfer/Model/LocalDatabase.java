@@ -30,9 +30,9 @@ public class LocalDatabase {
     /**
      * return the name of the user in user_data, return null if there is none
      */
-    public String getUser() {
+    public String getUser() throws SQLException {
         Statement statement = connection.createStatement();
-        ResultSet row = statement.execute("SELECT name FROM user_data");
+        ResultSet row = statement.executeQuery("SELECT name FROM user_data");
         String userName = row.getString("name");
         if(!row.wasNull()) return userName;
         return null;
@@ -40,9 +40,9 @@ public class LocalDatabase {
     /**
      * insert user into user_data table, replace the old user if they exist, return operation result
      */
-    public boolean setUser(String user) {
-        Statement statement = connection.createStatement(ResultSet.CONCUR_UPDATABLE);
-        ResultSet row = statement.execute("SELECT name FROM user_data");
+    public boolean setUser(String user) throws SQLException {
+        Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        ResultSet row = statement.executeQuery("SELECT name FROM user_data");
         String userName = row.getString("name");
         if(!row.wasNull()) {
             row.updateString("name", user);
@@ -57,19 +57,19 @@ public class LocalDatabase {
     /**
      * return the serverIP address in server_IP_data, return null if there is none
      */
-    public String getServerIP() {
+    public String getServerIP() throws SQLException {
         Statement statement = connection.createStatement();
-        ResultSet row = statement.execute("SELECT name FROM server_IP_data");
+        ResultSet row = statement.executeQuery("SELECT name FROM server_IP_data");
         String serverIpName = row.getString("name");
         if(!row.wasNull()) return serverIpName;
         return null;
     }
     /**
-     * insert serverIP address into server_IP_data table, replace the old serverIP address if it exist, return operation result
+     * insert serverIP address into server_IP_data table, replace the old serverIP address if it exists, return operation result
      */
-    public boolean setServerIP(String serverIP) {
-        Statement statement = connection.createStatement(ResultSet.CONCUR_UPDATABLE);
-        ResultSet row = statement.execute("SELECT name FROM server_IP_data");
+    public boolean setServerIP(String serverIP) throws SQLException {
+        Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
+        ResultSet row = statement.executeQuery("SELECT name FROM server_IP_data");
         String serverIpName = row.getString("name");
         if(!row.wasNull()) {
             row.updateString("name", serverIP);
@@ -84,18 +84,18 @@ public class LocalDatabase {
     /**
      * return a list of file data saved in the file_data table
      */
-    public ArrayList<FileData> getFileData() {
+    public ArrayList<FileData> getFileData() throws SQLException {
         ArrayList<FileData> fileList = new ArrayList<FileData>();
         Statement statement = connection.createStatement();
-        ResultSet row = statement.execute("SELECT * FROM file_data");
+        ResultSet row = statement.executeQuery("SELECT * FROM file_data");
         while(row.next()) {
             String name = row.getString("name");
-            Long file_size = row.getInt("file_size");
+            Long file_size = row.getLong("file_size");
             String description = row.getString("description");
-            // int date = row.getInt("date");
+            Date date = row.getDate("date");
             String file_location = row.getString("file_location");
 
-            FileData fileData = new FileData(name, file_size, description, file_location);
+            FileData fileData = new FileData(name, file_size, description, date, file_location);
 
             fileList.add(fileData);
         }
@@ -104,12 +104,12 @@ public class LocalDatabase {
     /**
      * insert fileData into the file_data table, return insert result
      */
-    public boolean insertFileData(FileData fileData) {
+    public boolean insertFileData(FileData fileData) throws SQLException {
         PreparedStatement ps = connection.prepareStatement("INSERT INTO file_data VALUES (?,?,?,?,?)");
         ps.setString(1, fileData.getName());
-        ps.setInt(2, fileData.getSize());
+        ps.setLong(2, fileData.getSize());
         ps.setString(3, fileData.getDescription());
-        ps.setInt(4, fileData.getUploadedDate());
+        ps.setDate(4, fileData.getUploadedDate());
         ps.setString(5, fileData.getFileLocation());
         
         ps.executeUpdate();
@@ -118,19 +118,19 @@ public class LocalDatabase {
     /**
      * go through the list of file and check their file location, delete them from the file_data table if they're no longer exist
      */
-    public ArrayList<FileData> checkFile() {
+    public ArrayList<FileData> checkFile() throws SQLException {
         ArrayList<FileData> fileList = new ArrayList<FileData>();
         Statement statement = connection.createStatement();
-        ResultSet row = statement.execute("SELECT * FROM file_data");
+        ResultSet row = statement.executeQuery("SELECT * FROM file_data");
         while(row.next()) {
             String file_location = row.getString("file_location");
             File fileLocation = new File(file_location);
             if(fileLocation.exists()) {
                 String name = row.getString("name");
-                Long file_size = row.getInt("file_size");
+                Long file_size = row.getLong("file_size");
                 String description = row.getString("description");
-                // int date = row.getInt("date");
-                FileData fileData = new FileData(name, file_size, description, file_location);
+                Date date = row.getDate("date");
+                FileData fileData = new FileData(name, file_size, description, date, file_location);
                 fileList.add(fileData);
             } else {
                 PreparedStatement ps = connection.prepareStatement("DELETE FROM file_data WHERE file_location = ?");
