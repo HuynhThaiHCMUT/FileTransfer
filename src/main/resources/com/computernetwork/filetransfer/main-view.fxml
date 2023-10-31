@@ -4,6 +4,8 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
@@ -90,7 +92,7 @@
                         <Font size="16.0" />
                      </font>
                      <HBox.margin>
-                        <Insets right="10.0" />
+                        <Insets />
                      </HBox.margin>
                   </TextField>
                   <Button defaultButton="true" mnemonicParsing="false" text="Search">
@@ -101,16 +103,8 @@
                         <Font size="16.0" />
                      </font>
                      <HBox.margin>
-                        <Insets right="10.0" />
+                        <Insets left="10.0" />
                      </HBox.margin>
-                  </Button>
-                  <Button defaultButton="true" mnemonicParsing="false" text="Filter">
-                     <graphic>
-                        <FontIcon iconLiteral="fa-filter" />
-                     </graphic>
-                     <font>
-                        <Font size="16.0" />
-                     </font>
                   </Button>
                </children>
                <VBox.margin>
@@ -121,8 +115,22 @@
                <VBox.margin>
                   <Insets bottom="10.0" top="10.0" />
                </VBox.margin>
+               <children>
+                  <TableView fx:id="userFileTable" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+                    <columns>
+                      <TableColumn fx:id="userFileColumn1" editable="false" prefWidth="200.0" text="File name" />
+                      <TableColumn fx:id="userFileColumn2" editable="false" minWidth="0.0" prefWidth="72.0" text="File size" />
+                        <TableColumn fx:id="userFileColumn3" editable="false" prefWidth="120.0" text="Uploaded date" />
+                        <TableColumn fx:id="userFileColumn4" prefWidth="160.0" text="File location" />
+                        <TableColumn fx:id="userFileColumn5" prefWidth="200.0" text="Description" />
+                    </columns>
+                     <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                     </columnResizePolicy>
+                  </TableView>
+               </children>
             </VBox>
-            <Button defaultButton="true" mnemonicParsing="false" text="Upload">
+            <Button defaultButton="true" mnemonicParsing="false" onMouseClicked="#onUploadClick" text="Upload">
                <graphic>
                   <FontIcon iconLiteral="fa-upload" />
                </graphic>
@@ -135,7 +143,7 @@
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
          </padding>
       </VBox>
-      <VBox fx:id="searchPanel" style="-fx-background-color: linear-gradient(to bottom right, #a29bfe, #74b9ff);" visible="false" GridPane.columnIndex="1">
+      <VBox fx:id="searchPanel" style="-fx-background-color: linear-gradient(to bottom right, #a29bfe, #74b9ff);" GridPane.columnIndex="1">
          <children>
             <HBox>
                <children>
@@ -173,7 +181,18 @@
                   <Insets top="10.0" />
                </VBox.margin>
                <children>
-                  <Text strokeType="OUTSIDE" strokeWidth="0.0" text="No matches" />
+                  <TableView fx:id="searchResultTable" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+                     <columns>
+                        <TableColumn fx:id="searchResultColumn1" editable="false" prefWidth="200.0" text="File name" />
+                        <TableColumn fx:id="searchResultColumn2" editable="false" minWidth="0.0" prefWidth="72.0" text="File size" />
+                        <TableColumn fx:id="searchResultColumn3" editable="false" prefWidth="120.0" text="Uploaded date" />
+                        <TableColumn fx:id="searchResultColumn4" prefWidth="160.0" text="Uploaded by" />
+                        <TableColumn fx:id="searchResultColumn5" prefWidth="200.0" text="Description" />
+                     </columns>
+                     <columnResizePolicy>
+                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
+                     </columnResizePolicy>
+                  </TableView>
                </children>
             </VBox>
          </children>

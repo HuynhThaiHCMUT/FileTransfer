@@ -102,9 +102,21 @@ public class LocalDatabase {
         return fileList;
     }
     /**
-     * insert fileData into the file_data table, return insert result
+     * check if fileName already exist in the file_data table
      */
-    public boolean insertFileData(FileData fileData) throws SQLException {
+    public boolean existFile(String fileName) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("SELECT * FROM file_data WHERE name = ?");
+        ps.setString(1, fileName);
+        ResultSet row = ps.executeQuery();
+        String s = row.getString("name");
+
+        if(row.wasNull()) return false;
+        return true;
+    }
+    /**
+     * insert fileData into the file_data table
+     */
+    public void insertFileData(FileData fileData) throws SQLException {
         PreparedStatement ps = connection.prepareStatement("INSERT INTO file_data VALUES (?,?,?,?,?)");
         ps.setString(1, fileData.getName());
         ps.setLong(2, fileData.getSize());
@@ -113,7 +125,14 @@ public class LocalDatabase {
         ps.setString(5, fileData.getFileLocation());
         
         ps.executeUpdate();
-        return true;
+    }
+    /**
+     * delete fileData from the file_data table
+     */
+    public void deleteFileData(String fileName) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("DELETE FROM file_data WHERE name = ?");
+        ps.setString(1, fileName);
+        ps.executeUpdate();
     }
     /**
      * go through the list of file and check their file location, delete them from the file_data table if they're no longer exist

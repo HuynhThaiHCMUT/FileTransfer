@@ -1,12 +1,11 @@
 package com.computernetwork.filetransfer.Model;
 
-import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
 
 public class NetworkSender {
     private String serverIP;
@@ -49,10 +48,10 @@ public class NetworkSender {
             }
         };
     }
-    public Task<ObservableList<FileData>> search(String query) {
-        return new Task<ObservableList<FileData>>() {
+    public Task<ArrayList<ServerFileData>> search(String query) {
+        return new Task<ArrayList<ServerFileData>>() {
             @Override
-            protected ObservableList<FileData> call() throws Exception {
+            protected ArrayList<ServerFileData> call() throws Exception {
                 Socket socket = new Socket(serverIP, 4040);
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());

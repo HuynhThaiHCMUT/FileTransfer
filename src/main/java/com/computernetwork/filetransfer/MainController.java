@@ -1,17 +1,20 @@
 package com.computernetwork.filetransfer;
 
-import com.computernetwork.filetransfer.Model.LocalDatabase;
-import com.computernetwork.filetransfer.Model.NetworkSender;
-import com.computernetwork.filetransfer.Model.Respond;
+import com.computernetwork.filetransfer.Model.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.TextField;
+import javafx.geometry.Insets;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 
@@ -20,6 +23,8 @@ public class MainController {
     private LocalDatabase database;
     private NetworkSender sender;
     private String username;
+    private ObservableList<FileData> userFile;
+    private ObservableList<ServerFileData> searchResult;
     private String serverIP;
     @FXML
     private Pane filePanel;
@@ -54,27 +59,71 @@ public class MainController {
     @FXML
     private Label usernameLabel;
     @FXML
+    private TableView<FileData> userFileTable;
+    @FXML
+    private TableView<ServerFileData> searchResultTable;
+    @FXML
+    private TableColumn<FileData, String> userFileColumn1;
+    @FXML
+    private TableColumn<FileData, Long> userFileColumn2;
+    @FXML
+    private TableColumn<FileData, String> userFileColumn3;
+    @FXML
+    private TableColumn<FileData, String> userFileColumn4;
+    @FXML
+    private TableColumn<FileData, String> userFileColumn5;
+    @FXML
+    private TableColumn<ServerFileData, String> searchResultColumn1;
+    @FXML
+    private TableColumn<ServerFileData, Long> searchResultColumn2;
+    @FXML
+    private TableColumn<ServerFileData, String> searchResultColumn3;
+    @FXML
+    private TableColumn<ServerFileData, String> searchResultColumn4;
+    @FXML
+    private TableColumn<ServerFileData, String> searchResultColumn5;
+    @FXML
     public void initialize() {
         username = null;
         serverIP = null;
+        userFile = null;
+        searchResult = null;
         sender = new NetworkSender();
+        //Open database and get initial value
         try {
             database = new LocalDatabase();
             username = database.getUser();
             serverIP = database.getServerIP();
+            userFile = FXCollections.observableArrayList(database.getFileData());
         } catch (SQLException e) {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Database Error");
-            alert.setContentText("Can't connect to database");
-            alert.showAndWait();
+            databaseError("Can't connect to database");
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
             System.exit(0);
         }
         if (username == null || serverIP == null) {
-            authScreen();
+            //authScreen();
+            authSuccess();
         } else {
             auth(false);
         }
+
+        //Set up userFile table
+        userFileTable.setPlaceholder(new Text("You haven't uploaded any file"));
+        userFileTable.setItems(userFile);
+        userFileColumn1.setCellValueFactory(new PropertyValueFactory<FileData, String>("name"));
+        userFileColumn2.setCellValueFactory(new PropertyValueFactory<FileData, Long>("size"));
+        userFileColumn3.setCellValueFactory(new PropertyValueFactory<FileData, String>("uploadedDate.toString()"));
+        userFileColumn4.setCellValueFactory(new PropertyValueFactory<FileData, String>("fileLocation"));
+        userFileColumn5.setCellValueFactory(new PropertyValueFactory<FileData, String>("description"));
+
+        //Set up searchResult table
+        searchResultTable.setPlaceholder(new Text("No result"));
+        searchResultTable.setItems(searchResult);
+        searchResultColumn1.setCellValueFactory(new PropertyValueFactory<ServerFileData, String>("name"));
+        searchResultColumn2.setCellValueFactory(new PropertyValueFactory<ServerFileData, Long>("size"));
+        searchResultColumn3.setCellValueFactory(new PropertyValueFactory<ServerFileData, String>("uploadedDate.toString()"));
+        searchResultColumn4.setCellValueFactory(new PropertyValueFactory<ServerFileData, String>("fileLocation"));
+        searchResultColumn5.setCellValueFactory(new PropertyValueFactory<ServerFileData, String>("description"));
 
     }
     private void switchToPane(Pane selectedPane, VBox selectedTab) {
@@ -137,13 +186,95 @@ public class MainController {
 
         task.setOnFailed(event -> {
             finishTask();
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Server error");
-            alert.setContentText("Cannot connect to server");
-            alert.showAndWait();
+            serverError(task.getException().getMessage());
         });
 
         startTask(task);
+    }
+    @FXML
+    public void onUploadClick() {
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Select file to upload");
+        File selectedFile = chooser.showOpenDialog(filePanel.getScene().getWindow());
+        if (selectedFile == null) return;
+
+        // Create a GridPane for the custom dialog layout
+        VBox box = new VBox();
+        box.setPadding(new Insets(10, 10, 10, 10));
+        box.setSpacing(10);
+
+        // Create input fields
+        TextField nameField = new TextField();
+        TextArea descriptionArea = new TextArea();
+
+        box.getChildren().add(new Label("File location: " + selectedFile.getAbsolutePath()));
+        box.getChildren().add(new Label("File size: " + selectedFile.length() + "bytes"));
+        box.getChildren().add(new Label("Name:"));
+        box.getChildren().add(nameField);
+        box.getChildren().add(new Label("Description:"));
+        box.getChildren().add(descriptionArea);
+
+        // Create a custom dialog
+        Dialog<String[]> dialog = new Dialog<>();
+        dialog.setTitle("Upload a file");
+        dialog.setHeaderText("Enter file name to be saved on server and description.");
+
+        // Set the buttons
+        ButtonType okButton = new ButtonType("OK", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        dialog.getDialogPane().getButtonTypes().addAll(okButton, cancelButton);
+
+        dialog.getDialogPane().setContent(box);
+
+        final Button ok = (Button) dialog.getDialogPane().lookupButton(okButton);
+        ok.addEventFilter(ActionEvent.ACTION, event -> {
+            try {
+                if (database.existFile(nameField.getText())) {
+                    databaseError("File with that name already exist");
+                    event.consume();
+                }
+            } catch (SQLException e) {
+                databaseError(e.getMessage());
+            }
+        });
+
+        // Handle the result when the OK button is clicked
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == okButton) {
+                String name = nameField.getText();
+                String description = descriptionArea.getText();
+                return new String[]{name, description};
+            }
+            return null;
+        });
+
+        if (dialog.showAndWait().isPresent()) {
+            FileData file = new FileData(dialog.getResult()[0], selectedFile.length(), dialog.getResult()[1], selectedFile.getAbsolutePath());
+            try {
+                database.insertFileData(file);
+                Task<Respond> task = sender.upload(file);
+                task.setOnSucceeded(event -> {
+                    finishTask();
+                    if (!task.getValue().isSuccess()) {
+                        serverError(task.getValue().getMessage());
+                    }
+                });
+                task.setOnFailed(event -> {
+                    finishTask();
+                    try {
+                        database.deleteFileData(file.getName());
+                    } catch (SQLException e) {
+                        databaseError(e.getMessage());
+                    }
+                    serverError(task.getException().getMessage());
+                });
+                startTask(task);
+            }
+            catch (SQLException e) {
+                databaseError("Cannot insert file data to database");
+            }
+        }
     }
     /**
      * Switch to auth screen
@@ -174,6 +305,20 @@ public class MainController {
 
         userPanel.setVisible(true);
         usernameLabel.setText(username);
+    }
+    private void databaseError(String reason) {
+        if (reason == null) reason = "Access denied or connection closed";
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Database error");
+        alert.setContentText(reason);
+        alert.showAndWait();
+    }
+    private void serverError(String reason) {
+        if (reason == null) reason = "Can't connect to server";
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Server error");
+        alert.setContentText(reason);
+        alert.showAndWait();
     }
     private void startTask(Task task) {
         loadingMessage.textProperty().bind(task.messageProperty());
