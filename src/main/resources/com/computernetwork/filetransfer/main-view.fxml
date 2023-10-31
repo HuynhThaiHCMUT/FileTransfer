@@ -28,7 +28,7 @@
    <children>
       <VBox prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: linear-gradient(to bottom right,  #6c5ce7, #0984e3);">
          <children>
-            <VBox fx:id="userTab" alignment="CENTER" onMouseClicked="#onUserClick" prefHeight="72.0" styleClass="sideTab">
+            <VBox fx:id="userTab" alignment="CENTER" onMouseClicked="#onUserTabClick" prefHeight="72.0" styleClass="sideTab">
                <children>
                   <FontIcon iconColor="#6200b5" iconLiteral="fa-user" iconSize="24" />
                   <Text fill="#2d3436" strokeType="OUTSIDE" strokeWidth="0.0" text="User" textAlignment="CENTER">
@@ -38,7 +38,7 @@
                   </Text>
                </children>
             </VBox>
-            <VBox fx:id="fileTab" alignment="CENTER" onMouseClicked="#onFileClick" prefHeight="72.0" styleClass="sideTab">
+            <VBox fx:id="fileTab" alignment="CENTER" onMouseClicked="#onFileTabClick" prefHeight="72.0" styleClass="sideTab">
                <children>
                   <FontIcon iconColor="#6200b5" iconLiteral="fa-folder" iconSize="24" text="" />
                   <Text fill="#2d3436" strokeType="OUTSIDE" strokeWidth="0.0" text="File" textAlignment="CENTER">
@@ -51,7 +51,7 @@
                   <Insets />
                </VBox.margin>
             </VBox>
-            <VBox fx:id="searchTab" alignment="CENTER" onMouseClicked="#onSearchClick" prefHeight="72.0" styleClass="sideTab">
+            <VBox fx:id="searchTab" alignment="CENTER" onMouseClicked="#onSearchTabClick" prefHeight="72.0" styleClass="sideTab">
                <children>
                   <FontIcon iconColor="#6200b5" iconLiteral="fa-search" iconSize="24" text="" />
                   <Text fill="#2d3436" strokeType="OUTSIDE" strokeWidth="0.0" text="Search" textAlignment="CENTER">
@@ -61,7 +61,7 @@
                   </Text>
                </children>
             </VBox>
-            <VBox fx:id="terminalTab" alignment="CENTER" onMouseClicked="#onTerminalClick" prefHeight="72.0" styleClass="sideTab">
+            <VBox fx:id="terminalTab" alignment="CENTER" onMouseClicked="#onTerminalTabClick" prefHeight="72.0" styleClass="sideTab">
                <children>
                   <FontIcon iconColor="#6200b5" iconLiteral="fa-terminal" iconSize="24" text="" />
                   <Text fill="#2d3436" strokeType="OUTSIDE" strokeWidth="0.0" text="Terminal" textAlignment="CENTER">
@@ -147,15 +147,15 @@
          <children>
             <HBox>
                <children>
-                  <TextField prefWidth="300.0" HBox.hgrow="ALWAYS">
+                  <TextField fx:id="searchBar" prefWidth="300.0" HBox.hgrow="ALWAYS">
                      <font>
                         <Font size="16.0" />
                      </font>
                      <HBox.margin>
-                        <Insets right="10.0" />
+                        <Insets />
                      </HBox.margin>
                   </TextField>
-                  <Button defaultButton="true" mnemonicParsing="false" text="Search">
+                  <Button defaultButton="true" mnemonicParsing="false" onMouseClicked="#onSearchClick" text="Search">
                      <graphic>
                         <FontIcon iconLiteral="fa-search" />
                      </graphic>
@@ -163,16 +163,8 @@
                         <Font size="16.0" />
                      </font>
                      <HBox.margin>
-                        <Insets right="10.0" />
+                        <Insets left="10.0" />
                      </HBox.margin>
-                  </Button>
-                  <Button defaultButton="true" mnemonicParsing="false" text="Filter">
-                     <graphic>
-                        <FontIcon iconLiteral="fa-filter" />
-                     </graphic>
-                     <font>
-                        <Font size="16.0" />
-                     </font>
                   </Button>
                </children>
             </HBox>

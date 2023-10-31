@@ -17,6 +17,7 @@ import javafx.stage.FileChooser;
 import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.ArrayList;
 
 
 public class MainController {
@@ -58,6 +59,8 @@ public class MainController {
     private VBox userInfo;
     @FXML
     private Label usernameLabel;
+    @FXML
+    private TextField searchBar;
     @FXML
     private TableView<FileData> userFileTable;
     @FXML
@@ -139,19 +142,19 @@ public class MainController {
     }
 
     @FXML
-    protected void onFileClick() {
+    protected void onFileTabClick() {
         switchToPane(filePanel, fileTab);
     }
     @FXML
-    protected void onSearchClick() {
+    protected void onSearchTabClick() {
         switchToPane(searchPanel, searchTab);
     }
     @FXML
-    protected void onTerminalClick() {
+    protected void onTerminalTabClick() {
         switchToPane(terminalPanel, terminalTab);
     }
     @FXML
-    protected void onUserClick() {
+    protected void onUserTabClick() {
         switchToPane(userPanel, userTab);
     }
     @FXML
@@ -170,7 +173,7 @@ public class MainController {
     protected void onSignOutClick() {
         authScreen();
     }
-    private void auth(boolean signUp) {
+    protected void auth(boolean signUp) {
         sender.setServerIP(serverIP);
         Task<Respond> task = signUp ? sender.signUp(username) : sender.login(username);
 
@@ -192,7 +195,7 @@ public class MainController {
         startTask(task);
     }
     @FXML
-    public void onUploadClick() {
+    protected void onUploadClick() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle("Select file to upload");
         File selectedFile = chooser.showOpenDialog(filePanel.getScene().getWindow());
@@ -275,6 +278,19 @@ public class MainController {
                 databaseError("Cannot insert file data to database");
             }
         }
+    }
+    @FXML
+    protected void onSearchClick() {
+        Task<ArrayList<ServerFileData>> task = sender.search(searchBar.getText());
+        task.setOnSucceeded(event -> {
+            finishTask();
+            searchResult = FXCollections.observableArrayList(task.getValue());
+        });
+        task.setOnFailed(event -> {
+            finishTask();
+            serverError(task.getException().getMessage());
+        });
+        startTask(task);
     }
     /**
      * Switch to auth screen
