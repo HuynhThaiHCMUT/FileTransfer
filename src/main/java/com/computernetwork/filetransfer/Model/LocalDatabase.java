@@ -14,7 +14,7 @@ public class LocalDatabase {
                 "name TEXT PRIMARY KEY," +
                 "file_size INTEGER NOT NULL," +
                 "description TEXT NOT NULL," +
-                "date INTEGER NOT NULL," +
+                "date TEXT NOT NULL," +
                 "file_location TEXT NOT NULL" +
                 ")";
         String createUserTable = "CREATE TABLE IF NOT EXISTS user_data (name TEXT PRIMARY KEY)";
@@ -92,7 +92,7 @@ public class LocalDatabase {
             String name = row.getString("name");
             Long file_size = row.getLong("file_size");
             String description = row.getString("description");
-            Date date = row.getDate("date");
+            Date date = Date.valueOf(row.getString("date"));
             String file_location = row.getString("file_location");
 
             FileData fileData = new FileData(name, file_size, description, date, file_location);
@@ -109,7 +109,7 @@ public class LocalDatabase {
         ps.setString(1, fileData.getName());
         ps.setLong(2, fileData.getSize());
         ps.setString(3, fileData.getDescription());
-        ps.setDate(4, fileData.getUploadedDate());
+        ps.setString(4, fileData.getUploadedDate().toString());
         ps.setString(5, fileData.getFileLocation());
         
         ps.executeUpdate();
@@ -129,7 +129,7 @@ public class LocalDatabase {
                 String name = row.getString("name");
                 Long file_size = row.getLong("file_size");
                 String description = row.getString("description");
-                Date date = row.getDate("date");
+                Date date = Date.valueOf(row.getString("date"));
                 FileData fileData = new FileData(name, file_size, description, date, file_location);
                 fileList.add(fileData);
             } else {
