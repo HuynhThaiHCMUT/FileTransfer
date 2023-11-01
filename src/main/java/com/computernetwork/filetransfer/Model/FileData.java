@@ -64,4 +64,34 @@ public class FileData {
     public void setFileLocation(String fileLocation) {
         this.fileLocation = fileLocation;
     }
+
+    public String formatedFileSize() {
+        if (size < 1024) {
+            return size + " B";
+        } else if (size < 1024 * 1024) {
+            double sizeInKB = size / 1024.0;
+            return String.format("%.2f KB", sizeInKB);
+        } else if (size < 1024 * 1024 * 1024) {
+            double sizeInMB = size / (1024.0 * 1024);
+            return String.format("%.2f MB", sizeInMB);
+        } else {
+            double sizeInGB = size / (1024.0 * 1024 * 1024);
+            return String.format("%.2f GB", sizeInGB);
+        }
+    }
+
+    public static String formatFileSize(long sizeInBytes) {
+        if (sizeInBytes < 1024) {
+            return sizeInBytes + " B";
+        } else if (sizeInBytes < 1024 * 1024) {
+            double sizeInKB = sizeInBytes / 1024.0;
+            return String.format("%.2f KB", sizeInKB);
+        } else if (sizeInBytes < 1024 * 1024 * 1024) {
+            double sizeInMB = sizeInBytes / (1024.0 * 1024);
+            return String.format("%.2f MB", sizeInMB);
+        } else {
+            double sizeInGB = sizeInBytes / (1024.0 * 1024 * 1024);
+            return String.format("%.2f GB", sizeInGB);
+        }
+    }
 }

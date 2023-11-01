@@ -3,13 +3,16 @@ package com.computernetwork.filetransfer;
 import com.computernetwork.filetransfer.Model.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -25,6 +28,7 @@ public class MainController {
     private NetworkSender sender;
     private String username;
     private ObservableList<FileData> userFile;
+    private FilteredList<FileData> filteredData;
     private ObservableList<ServerFileData> searchResult;
     private String serverIP;
     @FXML
@@ -60,9 +64,11 @@ public class MainController {
     @FXML
     private Label usernameLabel;
     @FXML
-    private TextField searchBar;
+    private TextField localSearchBar;
     @FXML
     private TableView<FileData> userFileTable;
+    @FXML
+    private TextField searchBar;
     @FXML
     private TableView<ServerFileData> searchResultTable;
     @FXML
@@ -110,9 +116,11 @@ public class MainController {
             auth(false);
         }
 
+        filteredData = new FilteredList<>(userFile, p -> true);
+
         //Set up userFile table
         userFileTable.setPlaceholder(new Text("You haven't uploaded any file"));
-        userFileTable.setItems(userFile);
+        userFileTable.setItems(filteredData);
         userFileColumn1.setCellValueFactory(new PropertyValueFactory<FileData, String>("name"));
         userFileColumn2.setCellValueFactory(new PropertyValueFactory<FileData, Long>("size"));
         userFileColumn3.setCellValueFactory(new PropertyValueFactory<FileData, String>("uploadedDate.toString()"));
@@ -201,19 +209,32 @@ public class MainController {
         File selectedFile = chooser.showOpenDialog(filePanel.getScene().getWindow());
         if (selectedFile == null) return;
 
+        String filePath = selectedFile.getAbsolutePath();
+        String fileExtension = null;
+
+        int lastDotIndex = filePath.lastIndexOf('.');
+        if (lastDotIndex > 0 && lastDotIndex < filePath.length() - 1) {
+            fileExtension = filePath.substring(lastDotIndex);
+        }
+
         // Create a GridPane for the custom dialog layout
-        VBox box = new VBox();
+        VBox box = new VBox(10);
         box.setPadding(new Insets(10, 10, 10, 10));
-        box.setSpacing(10);
 
         // Create input fields
         TextField nameField = new TextField();
         TextArea descriptionArea = new TextArea();
+        Label fileExtensionField = new Label(fileExtension);
+        HBox nameBox = new HBox(5);
+        nameBox.getChildren().add(nameField);
+        nameBox.getChildren().add(fileExtensionField);
+        HBox.setHgrow(nameField, Priority.ALWAYS);
+        fileExtensionField.setTranslateY(5);
 
-        box.getChildren().add(new Label("File location: " + selectedFile.getAbsolutePath()));
-        box.getChildren().add(new Label("File size: " + selectedFile.length() + "bytes"));
+        box.getChildren().add(new Label("File location: " + filePath));
+        box.getChildren().add(new Label("File size: " + FileData.formatFileSize(selectedFile.length()) + " (" + selectedFile.length() + ") bytes"));
         box.getChildren().add(new Label("Name:"));
-        box.getChildren().add(nameField);
+        box.getChildren().add(nameBox);
         box.getChildren().add(new Label("Description:"));
         box.getChildren().add(descriptionArea);
 
@@ -280,6 +301,20 @@ public class MainController {
         }
     }
     @FXML
+    protected void onLocalSearchClick() {
+        filteredData.setPredicate(file -> {
+            if (localSearchBar.getText() == null || localSearchBar.getText().isEmpty()) {
+                return true;
+            }
+            String lowerCaseFilter = localSearchBar.getText().toLowerCase();
+
+            if (file.getName().toLowerCase().contains(lowerCaseFilter)) {
+                return true;
+            }
+            return false;
+        });
+    }
+    @FXML
     protected void onSearchClick() {
         Task<ArrayList<ServerFileData>> task = sender.search(searchBar.getText());
         task.setOnSucceeded(event -> {
@@ -325,14 +360,16 @@ public class MainController {
     private void databaseError(String reason) {
         if (reason == null) reason = "Access denied or connection closed";
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Database error");
+        alert.setTitle("Error");
+        alert.setHeaderText("Database error");
         alert.setContentText(reason);
         alert.showAndWait();
     }
     private void serverError(String reason) {
         if (reason == null) reason = "Can't connect to server";
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Server error");
+        alert.setTitle("Error");
+        alert.setHeaderText("Server error");
         alert.setContentText(reason);
         alert.showAndWait();
     }
