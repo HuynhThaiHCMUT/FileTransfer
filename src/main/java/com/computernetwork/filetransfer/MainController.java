@@ -1,6 +1,7 @@
 package com.computernetwork.filetransfer;
 
 import com.computernetwork.filetransfer.Model.*;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -10,6 +11,8 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -26,9 +29,10 @@ import java.util.ArrayList;
 public class MainController {
     private LocalDatabase database;
     private NetworkSender sender;
+    private NetworkListener listener;
     private String username;
-    private ObservableList<FileData> userFile;
-    private FilteredList<FileData> filteredData;
+    private ObservableList<ClientFileData> userFile;
+    private FilteredList<ClientFileData> filteredData;
     private ObservableList<ServerFileData> searchResult;
     private String serverIP;
     @FXML
@@ -66,21 +70,21 @@ public class MainController {
     @FXML
     private TextField localSearchBar;
     @FXML
-    private TableView<FileData> userFileTable;
+    private TableView<ClientFileData> userFileTable;
     @FXML
     private TextField searchBar;
     @FXML
     private TableView<ServerFileData> searchResultTable;
     @FXML
-    private TableColumn<FileData, String> userFileColumn1;
+    private TableColumn<ClientFileData, String> userFileColumn1;
     @FXML
-    private TableColumn<FileData, Long> userFileColumn2;
+    private TableColumn<ClientFileData, Long> userFileColumn2;
     @FXML
-    private TableColumn<FileData, String> userFileColumn3;
+    private TableColumn<ClientFileData, String> userFileColumn3;
     @FXML
-    private TableColumn<FileData, String> userFileColumn4;
+    private TableColumn<ClientFileData, String> userFileColumn4;
     @FXML
-    private TableColumn<FileData, String> userFileColumn5;
+    private TableColumn<ClientFileData, String> userFileColumn5;
     @FXML
     private TableColumn<ServerFileData, String> searchResultColumn1;
     @FXML
@@ -92,12 +96,15 @@ public class MainController {
     @FXML
     private TableColumn<ServerFileData, String> searchResultColumn5;
     @FXML
+    private TextField input;
+    @FXML
+    private  TextArea output;
+    @FXML
     public void initialize() {
         username = null;
         serverIP = null;
         userFile = null;
         searchResult = null;
-        sender = new NetworkSender();
         //Open database and get initial value
         try {
             database = new LocalDatabase();
@@ -109,9 +116,17 @@ public class MainController {
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
             System.exit(0);
         }
+
+        sender = new NetworkSender();
+        listener = new NetworkListener(database, output, sender);
+        try {
+            listener.start();
+        } catch (IOException e) {
+            output.appendText("Failed to start listener: " + e.getMessage() + "\n");
+        }
+
         if (username == null || serverIP == null) {
-            //authScreen();
-            authSuccess();
+            authScreen();
         } else {
             auth(false);
         }
@@ -121,19 +136,19 @@ public class MainController {
         //Set up userFile table
         userFileTable.setPlaceholder(new Text("You haven't uploaded any file"));
         userFileTable.setItems(filteredData);
-        userFileColumn1.setCellValueFactory(new PropertyValueFactory<FileData, String>("name"));
-        userFileColumn2.setCellValueFactory(new PropertyValueFactory<FileData, Long>("size"));
-        userFileColumn3.setCellValueFactory(new PropertyValueFactory<FileData, String>("uploadedDate.toString()"));
-        userFileColumn4.setCellValueFactory(new PropertyValueFactory<FileData, String>("fileLocation"));
-        userFileColumn5.setCellValueFactory(new PropertyValueFactory<FileData, String>("description"));
+        userFileColumn1.setCellValueFactory(new PropertyValueFactory<ClientFileData, String>("name"));
+        userFileColumn2.setCellValueFactory(new PropertyValueFactory<ClientFileData, Long>("size"));
+        userFileColumn3.setCellValueFactory(value -> new SimpleStringProperty(value.getValue().getUploadedDate().toString()));
+        userFileColumn4.setCellValueFactory(new PropertyValueFactory<ClientFileData, String>("fileLocation"));
+        userFileColumn5.setCellValueFactory(new PropertyValueFactory<ClientFileData, String>("description"));
 
         //Set up searchResult table
         searchResultTable.setPlaceholder(new Text("No result"));
         searchResultTable.setItems(searchResult);
         searchResultColumn1.setCellValueFactory(new PropertyValueFactory<ServerFileData, String>("name"));
         searchResultColumn2.setCellValueFactory(new PropertyValueFactory<ServerFileData, Long>("size"));
-        searchResultColumn3.setCellValueFactory(new PropertyValueFactory<ServerFileData, String>("uploadedDate.toString()"));
-        searchResultColumn4.setCellValueFactory(new PropertyValueFactory<ServerFileData, String>("fileLocation"));
+        searchResultColumn3.setCellValueFactory(value -> new SimpleStringProperty(value.getValue().getUploadedDate().toString()));
+        searchResultColumn4.setCellValueFactory(new PropertyValueFactory<ServerFileData, String>("owner"));
         searchResultColumn5.setCellValueFactory(new PropertyValueFactory<ServerFileData, String>("description"));
 
     }
@@ -232,7 +247,7 @@ public class MainController {
         fileExtensionField.setTranslateY(5);
 
         box.getChildren().add(new Label("File location: " + filePath));
-        box.getChildren().add(new Label("File size: " + FileData.formatFileSize(selectedFile.length()) + " (" + selectedFile.length() + ") bytes"));
+        box.getChildren().add(new Label("File size: " + ClientFileData.formatFileSize(selectedFile.length()) + " (" + selectedFile.length() + ") bytes"));
         box.getChildren().add(new Label("Name:"));
         box.getChildren().add(nameBox);
         box.getChildren().add(new Label("Description:"));
@@ -264,9 +279,10 @@ public class MainController {
         });
 
         // Handle the result when the OK button is clicked
+        String finalFileExtension = fileExtension;
         dialog.setResultConverter(dialogButton -> {
             if (dialogButton == okButton) {
-                String name = nameField.getText();
+                String name = nameField.getText() + finalFileExtension;
                 String description = descriptionArea.getText();
                 return new String[]{name, description};
             }
@@ -274,7 +290,7 @@ public class MainController {
         });
 
         if (dialog.showAndWait().isPresent()) {
-            FileData file = new FileData(dialog.getResult()[0], selectedFile.length(), dialog.getResult()[1], selectedFile.getAbsolutePath());
+            ClientFileData file = new ClientFileData(dialog.getResult()[0], selectedFile.length(), dialog.getResult()[1], selectedFile.getAbsolutePath());
             try {
                 database.insertFileData(file);
                 Task<Respond> task = sender.upload(this.username, file);
@@ -282,6 +298,8 @@ public class MainController {
                     finishTask();
                     if (!task.getValue().isSuccess()) {
                         serverError(task.getValue().getMessage());
+                    } else {
+                        userFile.add(file);
                     }
                 });
                 task.setOnFailed(event -> {
@@ -316,16 +334,45 @@ public class MainController {
     }
     @FXML
     protected void onSearchClick() {
-        Task<ArrayList<ServerFileData>> task = sender.search(this.username, searchBar.getText());
+        ArrayList<ServerFileData> fileList = new ArrayList<>();
+        Task<Respond> task = sender.search(username, searchBar.getText(), fileList);
         task.setOnSucceeded(event -> {
             finishTask();
-            searchResult = FXCollections.observableArrayList(task.getValue());
+            searchResult = FXCollections.observableArrayList(fileList);
+            searchResultTable.setItems(searchResult);
         });
         task.setOnFailed(event -> {
             finishTask();
             serverError(task.getException().getMessage());
         });
         startTask(task);
+    }
+    @FXML
+    private void onKeyPress(KeyEvent event) {
+        if (event.getCode() == KeyCode.ENTER) {
+            output.appendText(input.getText() + "\n");
+            String result = process(input.getText());
+            if (result != null) output.appendText(result + "\n");
+            input.clear();
+        }
+    }
+    private String process(String cmd) {
+        String[] tokens = cmd.split(" ");
+        switch (tokens[0]) {
+            case "start":
+                if (listener.isStarted()) return "Listener already started";
+                try {
+                    listener.start();
+                } catch (IOException e) {
+                    return ("Failed to start listener: " + e.getMessage());
+                }
+                return "Starting listener...";
+
+            //TODO: Add more command
+
+            default:
+                return "Invalid command";
+        }
     }
     /**
      * Switch to auth screen
@@ -356,6 +403,14 @@ public class MainController {
 
         userPanel.setVisible(true);
         usernameLabel.setText(username);
+
+        try {
+            database.setUser(username);
+            database.setServerIP(serverIP);
+        } catch (SQLException e) {
+            databaseError("Failed to saved login information");
+        }
+
     }
     private void databaseError(String reason) {
         if (reason == null) reason = "Access denied or connection closed";

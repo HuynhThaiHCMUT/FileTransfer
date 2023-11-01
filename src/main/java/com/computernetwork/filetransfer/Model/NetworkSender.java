@@ -4,8 +4,8 @@ import javafx.concurrent.Task;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.IOException;
 import java.net.*;
-import java.nio.charset.Charset;
 import java.sql.Date;
 import java.util.ArrayList;
 
@@ -20,20 +20,8 @@ public class NetworkSender {
         this.serverIP = serverIP;
     }
 
-    // helper functions -------------------------------------------------------------------------
-    private static void writeString(DataOutputStream ostream, String string) throws Exception {
-        ostream.writeShort((short)string.length());
-        ostream.write(string.getBytes(Charset.forName("UTF-8")));
-    }
-
-    private static String readString(DataInputStream istream) throws Exception {
-        short length = istream.readShort();
-        byte[] byteArray = new byte[length];
-        istream.readFully(byteArray);
-        return new String(byteArray);
-    }
-
-    private static Respond buildResponse(DataInputStream istream, short messageType) throws Exception {
+    //helper function
+    private Respond buildResponse(DataInputStream istream, short messageType) throws IOException {
         Respond response = new Respond(false, null);
         short statusCode = istream.readShort();
 
@@ -42,9 +30,8 @@ public class NetworkSender {
             response.setMessage("Success");
         } else {
             response.setSuccess(false);
-
             if (statusCode == 400) {
-                response.setMessage("Invalid username length");
+                response.setMessage("Invalid message type");
             } else if (statusCode == 401) {
                 if (messageType == 2) { // sign up
                     response.setMessage("Username already exists");
@@ -55,14 +42,10 @@ public class NetworkSender {
                 }
             } else if (statusCode == 402 && messageType == 3) { // upload
                 response.setMessage("Invalid file size");
-            } else if (statusCode == 403 && messageType == 3) { // upload
-                response.setMessage("Invalid file name length");
-            } else if (statusCode == 404 && messageType == 4) { // search
+            } else if (statusCode == 403 && messageType == 3) {
+                response.setMessage("Invalid file name");
+            } else if (statusCode == 404 && messageType == 4) { // search TODO
                 response.setMessage("File not found");
-            } else if (statusCode == 405 && messageType == 3) { // upload
-                response.setMessage("Invalid file description length");
-            } else if (statusCode == 406 && messageType == 4) { // search
-                response.setMessage("Invalid query length");
             } else if (statusCode == 500) {
                 response.setMessage("Internal server error");
             } else {
@@ -72,7 +55,6 @@ public class NetworkSender {
 
         return response;
     }
-    // ------------------------------------------------------------------------------------------
 
     public Task<Respond> signUp(String username) {
         return new Task<Respond>() {
@@ -82,18 +64,23 @@ public class NetworkSender {
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
 
-                //TODO
                 short messageType = 2;
 
-                // request
-                ostream.writeShort(messageType);
-                NetworkSender.writeString(ostream, username);
+                socket.setSoTimeout(5000);
+                try {
+                    // request
+                    ostream.writeShort(messageType);
+                    ostream.writeUTF(username);
 
-                // respond
-                Respond response = NetworkSender.buildResponse(istream, messageType);
+                    // respond
+                    Respond response = buildResponse(istream, messageType);
 
-                socket.close();
-                return response;
+                    socket.close();
+                    return response;
+                } catch (SocketTimeoutException e) {
+                    socket.close();
+                    throw new SocketTimeoutException("Request timed out");
+                }
             }
         };
     }
@@ -105,64 +92,71 @@ public class NetworkSender {
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
 
-                //TODO
                 short messageType = 1;
 
-                // request
-                ostream.writeShort(messageType);
-                NetworkSender.writeString(ostream, username);
+                socket.setSoTimeout(5000);
+                try {
+                    // request
+                    ostream.writeShort(messageType);
+                    ostream.writeUTF(username);
 
-                // respond
-                Respond response = NetworkSender.buildResponse(istream, messageType);
-                
-                socket.close();
-                return response;
+                    // respond
+                    Respond response = buildResponse(istream, messageType);
+
+                    socket.close();
+                    return response;
+                } catch (SocketTimeoutException e) {
+                    socket.close();
+                    throw new SocketTimeoutException("Request timed out");
+                }
             }
         };
     }
-    public Task<ArrayList<ServerFileData>> search(String username, String query) {
-        return new Task<ArrayList<ServerFileData>>() {
+    public Task<Respond> search(String username, String query, ArrayList<ServerFileData> fileList) {
+        return new Task<Respond>() {
             @Override
-            protected ArrayList<ServerFileData> call() throws Exception {
+            protected Respond call() throws Exception {
                 Socket socket = new Socket(serverIP, 4040);
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
 
-                //TODO
                 short messageType = 4;
 
-                // request
-                ostream.writeShort(messageType);
-                NetworkSender.writeString(ostream, username);
-                NetworkSender.writeString(ostream, query);
+                socket.setSoTimeout(5000);
+                try {
+                    // request
+                    ostream.writeShort(messageType);
+                    ostream.writeUTF(username);
+                    ostream.writeUTF(query);
 
-                // respond
-                ArrayList<ServerFileData> fileList = new ArrayList<ServerFileData>();
-                short statusCode = istream.readShort();
-                
-                if (statusCode == 200) {                    
-                    istream.readShort(); // msgtype
-                    short fileCount = istream.readShort();
-                    
-                    for (short i = 0; i < fileCount; ++i) {
-                        String username = NetworkSender.readString(istream);
-                        long fileSize = istream.readLong();
-                        String filename = NetworkSender.readString(istream);
-                        String fileDescription = NetworkSender.readString(istream);
-                        Date uploadDate = new Date(istream.readLong());
+                    // respond
+                    Respond respond = buildResponse(istream, messageType);
 
-                        ServerFileData serverFileData = new ServerFileData(filename, fileSize, fileDescription, uploadDate, username);
-                        fileList.add(serverFileData);
+                    if (respond.isSuccess()) {
+                        short fileCount = istream.readShort();
+
+                        for (short i = 0; i < fileCount; ++i) {
+                            String username = istream.readUTF(istream);
+                            long fileSize = istream.readLong();
+                            String filename = istream.readUTF(istream);
+                            String fileDescription = istream.readUTF(istream);
+                            Date uploadDate = new Date(istream.readLong());
+
+                            ServerFileData serverFileData = new ServerFileData(filename, fileSize, fileDescription, uploadDate, username);
+                            fileList.add(serverFileData);
+                        }
                     }
-                }
-                // else fileList is empty
 
-                socket.close();
-                return fileList;
+                    socket.close();
+                    return respond;
+                } catch (SocketTimeoutException e) {
+                    socket.close();
+                    throw new SocketTimeoutException("Request timed out");
+                }
             }
         };
     }
-    public Task<Respond> upload(String username, FileData file) {
+    public Task<Respond> upload(String username, ClientFileData file) {
         return new Task<Respond>() {
             @Override
             protected Respond call() throws Exception {
@@ -170,25 +164,30 @@ public class NetworkSender {
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
 
-                //TODO
                 short messageType = 3;
 
-                // request
-                ostream.writeShort(messageType);
-                NetworkSender.writeString(ostream, username);
-                ostream.writeLong(file.getSize());
-                NetworkSender.writeString(ostream, file.getName());
-                NetworkSender.writeString(ostream, file.getDescription());  
+                socket.setSoTimeout(5000);
+                try {
+                    // request
+                    ostream.writeShort(messageType);
+                    ostream.writeUTF(username);
+                    ostream.writeLong(file.getSize());
+                    ostream.writeUTF(file.getName());
+                    ostream.writeUTF(file.getDescription());
 
-                // respond
-                Respond response = NetworkSender.buildResponse(istream, messageType);
+                    // respond
+                    Respond response = buildResponse(istream, messageType);
 
-                socket.close();
-                return response;
+                    socket.close();
+                    return response;
+                } catch (SocketTimeoutException e) {
+                    socket.close();
+                    throw new SocketTimeoutException("Request timed out");
+                }
             }
         };
     }
-    public Task<Respond> reportMissingFile(String username, FileData file) {
+    public Task<Respond> reportMissingFile(String username, ClientFileData file) {
         return new Task<Respond>() {
             @Override
             protected Respond call() throws Exception {
@@ -196,19 +195,24 @@ public class NetworkSender {
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
 
-                //TODO
                 short messageType = 5;
 
-                // request
-                ostream.writeShort(messageType);
-                NetworkSender.writeString(ostream, username);
-                NetworkSender.writeString(ostream, file.getName());
+                socket.setSoTimeout(5000);
+                try {
+                    // request
+                    ostream.writeShort(messageType);
+                    ostream.writeUTF(username);
+                    ostream.writeUTF(file.getName());
 
-                // respond
-                Respond response = NetworkSender.buildResponse(istream, messageType);
+                    // respond
+                    Respond response = buildResponse(istream, messageType);
 
-                socket.close();
-                return response;
+                    socket.close();
+                    return response;
+                } catch (SocketTimeoutException e) {
+                    socket.close();
+                    throw new SocketTimeoutException("Request timed out");
+                }
             }
         };
     }
