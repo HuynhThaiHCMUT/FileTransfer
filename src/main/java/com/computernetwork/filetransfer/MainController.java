@@ -277,7 +277,7 @@ public class MainController {
             FileData file = new FileData(dialog.getResult()[0], selectedFile.length(), dialog.getResult()[1], selectedFile.getAbsolutePath());
             try {
                 database.insertFileData(file);
-                Task<Respond> task = sender.upload(file);
+                Task<Respond> task = sender.upload(this.username, file);
                 task.setOnSucceeded(event -> {
                     finishTask();
                     if (!task.getValue().isSuccess()) {
@@ -316,7 +316,7 @@ public class MainController {
     }
     @FXML
     protected void onSearchClick() {
-        Task<ArrayList<ServerFileData>> task = sender.search(searchBar.getText());
+        Task<ArrayList<ServerFileData>> task = sender.search(this.username, searchBar.getText());
         task.setOnSucceeded(event -> {
             finishTask();
             searchResult = FXCollections.observableArrayList(task.getValue());
