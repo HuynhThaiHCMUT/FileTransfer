@@ -13,10 +13,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 
@@ -113,16 +110,18 @@ public class MainController {
             userFile = FXCollections.observableArrayList(database.getFileData());
         } catch (SQLException e) {
             databaseError("Can't connect to database");
+            e.printStackTrace();
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
             System.exit(0);
         }
 
         sender = new NetworkSender();
-        listener = new NetworkListener(database, output, sender);
+        listener = new NetworkListener(database, output);
         try {
             listener.start();
         } catch (IOException e) {
             output.appendText("Failed to start listener: " + e.getMessage() + "\n");
+            e.printStackTrace();
         }
 
         if (username == null || serverIP == null) {
@@ -136,21 +135,81 @@ public class MainController {
         //Set up userFile table
         userFileTable.setPlaceholder(new Text("You haven't uploaded any file"));
         userFileTable.setItems(filteredData);
-        userFileColumn1.setCellValueFactory(new PropertyValueFactory<ClientFileData, String>("name"));
-        userFileColumn2.setCellValueFactory(new PropertyValueFactory<ClientFileData, Long>("size"));
+        userFileColumn1.setCellValueFactory(new PropertyValueFactory<>("name"));
+        userFileColumn2.setCellValueFactory(new PropertyValueFactory<>("size"));
         userFileColumn3.setCellValueFactory(value -> new SimpleStringProperty(value.getValue().getUploadedDate().toString()));
-        userFileColumn4.setCellValueFactory(new PropertyValueFactory<ClientFileData, String>("fileLocation"));
-        userFileColumn5.setCellValueFactory(new PropertyValueFactory<ClientFileData, String>("description"));
+        userFileColumn4.setCellValueFactory(new PropertyValueFactory<>("fileLocation"));
+        userFileColumn5.setCellValueFactory(new PropertyValueFactory<>("description"));
 
         //Set up searchResult table
         searchResultTable.setPlaceholder(new Text("No result"));
         searchResultTable.setItems(searchResult);
-        searchResultColumn1.setCellValueFactory(new PropertyValueFactory<ServerFileData, String>("name"));
-        searchResultColumn2.setCellValueFactory(new PropertyValueFactory<ServerFileData, Long>("size"));
+        searchResultColumn1.setCellValueFactory(new PropertyValueFactory<>("name"));
+        searchResultColumn2.setCellValueFactory(new PropertyValueFactory<>("size"));
         searchResultColumn3.setCellValueFactory(value -> new SimpleStringProperty(value.getValue().getUploadedDate().toString()));
-        searchResultColumn4.setCellValueFactory(new PropertyValueFactory<ServerFileData, String>("owner"));
-        searchResultColumn5.setCellValueFactory(new PropertyValueFactory<ServerFileData, String>("description"));
+        searchResultColumn4.setCellValueFactory(new PropertyValueFactory<>("owner"));
+        searchResultColumn5.setCellValueFactory(new PropertyValueFactory<>("description"));
 
+        searchResultTable.setRowFactory(value -> new TableRow<>() {
+            @Override
+            protected void updateItem(ServerFileData item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (item == null || empty) {
+                    setStyle("");
+                } else {
+                    setOnMouseClicked(event -> {
+                        if (event.getClickCount() == 2 && !isEmpty()) {
+                            ServerFileData selectedFile = getItem();
+                            String fileExtension = "";
+
+                            int lastDotIndex = selectedFile.getName().lastIndexOf('.');
+                            if (lastDotIndex > 0 && lastDotIndex < selectedFile.getName().length() - 1) {
+                                fileExtension = selectedFile.getName().substring(lastDotIndex);
+                            }
+
+                            FileChooser chooser = new FileChooser();
+                            chooser.setTitle("Select file to upload");
+                            chooser.setInitialFileName(selectedFile.getName());
+                            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(fileExtension, "*" + fileExtension));
+                            File savedFile = chooser.showSaveDialog((filePanel.getScene().getWindow()));
+
+                            if (savedFile != null) {
+                                Task<Respond> task = sender.requestFile(selectedFile, savedFile);
+                                task.setOnSucceeded(ev -> {
+                                    finishTask();
+                                    if (task.getValue().isSuccess()) {
+                                        try {
+                                            if (database.existFile(savedFile.getName()) == null)
+                                                upload(new ClientFileData(savedFile.getName(), selectedFile.getSize(), selectedFile.getDescription(), savedFile.getAbsolutePath()));
+                                            else databaseError("Upload failed, you already have a file with that name");
+                                        } catch (SQLException e) {
+                                            databaseError(e.getMessage());
+                                            e.printStackTrace();
+                                        }
+                                    } else {
+                                        savedFile.delete();
+                                        downloadError("File doesn't exist");
+                                    }
+                                });
+                                task.setOnFailed(ev -> {
+                                    finishTask();
+                                    savedFile.delete();
+                                    downloadError(task.getException().getMessage());
+                                    task.getException().printStackTrace();
+                                });
+                                startTask(task);
+                            }
+                        }
+                    });
+                    if (item.isOnline()) {
+                        setStyle("-fx-text-background-color: green;");
+                    } else {
+                        setStyle("-fx-text-background-color: red;");
+                    }
+                }
+            }
+        });
     }
     private void switchToPane(Pane selectedPane, VBox selectedTab) {
         filePanel.setVisible(selectedPane == filePanel);
@@ -212,7 +271,9 @@ public class MainController {
 
         task.setOnFailed(event -> {
             finishTask();
+            if (!userPanel.isVisible()) authScreen();
             serverError(task.getException().getMessage());
+            task.getException().printStackTrace();
         });
 
         startTask(task);
@@ -269,12 +330,13 @@ public class MainController {
         final Button ok = (Button) dialog.getDialogPane().lookupButton(okButton);
         ok.addEventFilter(ActionEvent.ACTION, event -> {
             try {
-                if (database.existFile(nameField.getText())) {
+                if (database.existFile(nameField.getText()) != null) {
                     databaseError("File with that name already exist");
                     event.consume();
                 }
             } catch (SQLException e) {
                 databaseError(e.getMessage());
+                e.printStackTrace();
             }
         });
 
@@ -291,31 +353,37 @@ public class MainController {
 
         if (dialog.showAndWait().isPresent()) {
             ClientFileData file = new ClientFileData(dialog.getResult()[0], selectedFile.length(), dialog.getResult()[1], selectedFile.getAbsolutePath());
-            try {
-                database.insertFileData(file);
-                Task<Respond> task = sender.upload(this.username, file);
-                task.setOnSucceeded(event -> {
-                    finishTask();
-                    if (!task.getValue().isSuccess()) {
-                        serverError(task.getValue().getMessage());
-                    } else {
-                        userFile.add(file);
-                    }
-                });
-                task.setOnFailed(event -> {
-                    finishTask();
-                    try {
-                        database.deleteFileData(file.getName());
-                    } catch (SQLException e) {
-                        databaseError(e.getMessage());
-                    }
-                    serverError(task.getException().getMessage());
-                });
-                startTask(task);
-            }
-            catch (SQLException e) {
-                databaseError("Cannot insert file data to database");
-            }
+            upload(file);
+        }
+    }
+    private void upload(ClientFileData file) {
+        try {
+            database.insertFileData(file);
+            Task<Respond> task = sender.upload(this.username, file);
+            task.setOnSucceeded(event -> {
+                finishTask();
+                if (!task.getValue().isSuccess()) {
+                    serverError(task.getValue().getMessage());
+                } else {
+                    userFile.add(file);
+                }
+            });
+            task.setOnFailed(event -> {
+                finishTask();
+                try {
+                    database.deleteFileData(file.getName());
+                } catch (SQLException e) {
+                    databaseError(e.getMessage());
+                    e.printStackTrace();
+                }
+                serverError(task.getException().getMessage());
+                task.getException().printStackTrace();
+            });
+            startTask(task);
+        }
+        catch (SQLException e) {
+            databaseError("Cannot insert file data to database");
+            e.printStackTrace();
         }
     }
     @FXML
@@ -326,10 +394,7 @@ public class MainController {
             }
             String lowerCaseFilter = localSearchBar.getText().toLowerCase();
 
-            if (file.getName().toLowerCase().contains(lowerCaseFilter)) {
-                return true;
-            }
-            return false;
+            return file.getName().toLowerCase().contains(lowerCaseFilter);
         });
     }
     @FXML
@@ -344,6 +409,7 @@ public class MainController {
         task.setOnFailed(event -> {
             finishTask();
             serverError(task.getException().getMessage());
+            task.getException().printStackTrace();
         });
         startTask(task);
     }
@@ -357,17 +423,64 @@ public class MainController {
         }
     }
     private String process(String cmd) {
-        String[] tokens = cmd.split(" ");
+        String[] tokens = cmd.split("_");
+        if (tokens.length == 0) return null;
         switch (tokens[0]) {
             case "start":
                 if (listener.isStarted()) return "Listener already started";
                 try {
                     listener.start();
                 } catch (IOException e) {
+                    e.printStackTrace();
                     return ("Failed to start listener: " + e.getMessage());
                 }
                 return "Starting listener...";
-
+            /*
+            case "publish":
+                if (tokens.length < 3) return "Not enough parameters";
+                File file = new File(tokens[2]);
+                if (file.exists()) {
+                    try {
+                        if (database.existFile(tokens[1]) == null) {
+                            ClientFileData fileData = new ClientFileData(tokens[1], file.length(), null, file.getAbsolutePath());
+                            try {
+                                database.insertFileData(fileData);
+                                Task<Respond> task = sender.upload(this.username, fileData);
+                                task.setOnSucceeded(event -> {
+                                    finishTask();
+                                    if (!task.getValue().isSuccess()) {
+                                        output.appendText(task.getValue().getMessage());
+                                    } else {
+                                        userFile.add(fileData);
+                                    }
+                                });
+                                task.setOnFailed(event -> {
+                                    finishTask();
+                                    try {
+                                        database.deleteFileData(file.getName());
+                                    } catch (SQLException e) {
+                                        output.appendText(e.getMessage());
+                                        e.printStackTrace();
+                                    }
+                                    output.appendText(task.getException().getMessage());
+                                    task.getException().printStackTrace();
+                                });
+                                startTask(task);
+                                return "Upload successful";
+                            }
+                            catch (SQLException e) {
+                                e.printStackTrace();
+                                return "Cannot insert file data to database";
+                            }
+                        }
+                        else return "Upload failed, you already have a file with that name";
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                        return "Failed to upload file: " + e.getMessage();
+                    }
+                }
+                return "File does not exist";
+                */
             //TODO: Add more command
 
             default:
@@ -409,6 +522,7 @@ public class MainController {
             database.setServerIP(serverIP);
         } catch (SQLException e) {
             databaseError("Failed to saved login information");
+            e.printStackTrace();
         }
 
     }
@@ -425,6 +539,14 @@ public class MainController {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
         alert.setHeaderText("Server error");
+        alert.setContentText(reason);
+        alert.showAndWait();
+    }
+    private void downloadError(String reason) {
+        if (reason == null) reason = "Can't connect to host";
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Error");
+        alert.setHeaderText("Download error");
         alert.setContentText(reason);
         alert.showAndWait();
     }

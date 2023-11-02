@@ -4,24 +4,19 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.scene.control.TextArea;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public class NetworkListener {
-    private LocalDatabase database;
-    private TextArea output;
-    private NetworkSender sender;
+    private final LocalDatabase database;
+    private final TextArea output;
     private boolean started;
 
-    public NetworkListener(LocalDatabase database, TextArea output, NetworkSender sender) {
+    public NetworkListener(LocalDatabase database, TextArea output) {
         this.database = database;
         this.output = output;
-        this.sender = sender;
         started = false;
     }
     public void start() throws IOException {
@@ -30,12 +25,7 @@ public class NetworkListener {
             @Override
             protected String call() throws Exception {
                 started = true;
-                Platform.runLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        output.appendText("Listener started, waiting for connection\n");
-                    }
-                });
+                Platform.runLater(() -> output.appendText("Listener started, waiting for connection\n"));
                 while (!isCancelled()) {
                     Socket newClient = socket.accept();
                     ListenerTask task = new ListenerTask(newClient);
@@ -52,6 +42,7 @@ public class NetworkListener {
                     socket.close();
                 } catch (IOException e) {
                     output.appendText("Error while closing listener: " + e.getMessage() + "\n");
+                    e.printStackTrace();
                 }
                 output.appendText(getValue());
             }
@@ -62,8 +53,10 @@ public class NetworkListener {
                     socket.close();
                 } catch (IOException e) {
                     output.appendText("Error while closing listener: " + e.getMessage() + "\n");
+                    e.printStackTrace();
                 }
                 output.appendText("Listener caught an exception: " + getException().getMessage() + "\n");
+                getException().printStackTrace();
             }
         };
         Thread startThread = new Thread(startTask);
@@ -115,6 +108,28 @@ public class NetworkListener {
                         return clientIP + " sent a discover request for " + username +"\n" +
                                 "Incorrect user, request denied\n";
                     }
+                case 7:
+                    //username is now filename
+                    ClientFileData fileData = database.existFile(username);
+                    if (fileData != null) {
+                        File file = new File(fileData.getFileLocation());
+                        if (file.canRead()) {
+                            ostream.writeShort(200);
+                            FileInputStream fileInputStream = new FileInputStream(file);
+                            ostream.writeLong(file.length());
+                            byte[] buffer = new byte[4 * 1024];
+                            int bytes;
+                            while ((bytes = fileInputStream.read(buffer)) != -1) {
+                                ostream.write(buffer, 0, bytes);
+                            }
+                            fileInputStream.close();
+                            return clientIP + " sent a download request for file " + username +"\n" +
+                                    "File found, transferred file to requesting client\n";
+                        }
+                    }
+                    ostream.writeShort(404);
+                    return clientIP + " sent a download request for file " + username +"\n" +
+                            "File not found, request denied\n";
                 default:
                     ostream.writeShort(400);
                     ostream.writeShort(msgType);
@@ -127,6 +142,7 @@ public class NetworkListener {
                 client.close();
             } catch (IOException e) {
                 output.appendText("Error while closing client connection: " + e.getMessage() + "\n");
+                e.printStackTrace();
             }
             output.appendText(getValue());
         }
@@ -136,8 +152,10 @@ public class NetworkListener {
                 client.close();
             } catch (IOException e) {
                 output.appendText("Error while closing client connection: " + e.getMessage() + "\n");
+                e.printStackTrace();
             }
             output.appendText("Error while handling request from " + clientIP + ": " + getException().getMessage() + "\n");
+            getException().printStackTrace();
         }
     }
 

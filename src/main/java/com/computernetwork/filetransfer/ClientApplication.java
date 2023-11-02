@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 public class ClientApplication extends Application {
     private MainController controller;
@@ -24,9 +25,7 @@ public class ClientApplication extends Application {
     public void stop() {
         try {
             controller.onClose();
-        } catch (java.sql.SQLException e) {
-            System.out.println(e.getMessage());
-        } catch (IOException e) {
+        } catch (SQLException | IOException e) {
             System.out.println(e.getMessage());
         }
     }

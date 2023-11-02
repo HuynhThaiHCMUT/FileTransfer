@@ -65,7 +65,7 @@ public class ClientFileData {
         this.fileLocation = fileLocation;
     }
 
-    public String formatedFileSize() {
+    public String formattedFileSize() {
         if (size < 1024) {
             return size + " B";
         } else if (size < 1024 * 1024) {

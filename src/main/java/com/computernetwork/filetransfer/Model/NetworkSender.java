@@ -2,19 +2,13 @@ package com.computernetwork.filetransfer.Model;
 
 import javafx.concurrent.Task;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
 import java.sql.Date;
 import java.util.ArrayList;
 
 public class NetworkSender {
     private String serverIP;
-
-    public String getServerIP() {
-        return serverIP;
-    }
 
     public void setServerIP(String serverIP) {
         this.serverIP = serverIP;
@@ -42,9 +36,9 @@ public class NetworkSender {
                 }
             } else if (statusCode == 402 && messageType == 3) { // upload
                 response.setMessage("Invalid file size");
-            } else if (statusCode == 403 && messageType == 3) {
+            } else if (statusCode == 403 && messageType == 3) { // upload
                 response.setMessage("Invalid file name");
-            } else if (statusCode == 404 && messageType == 4) { // search TODO
+            } else if (statusCode == 404 && messageType == 7) { // download
                 response.setMessage("File not found");
             } else if (statusCode == 500) {
                 response.setMessage("Internal server error");
@@ -57,7 +51,7 @@ public class NetworkSender {
     }
 
     public Task<Respond> signUp(String username) {
-        return new Task<Respond>() {
+        return new Task<>() {
             @Override
             protected Respond call() throws Exception {
                 Socket socket = new Socket(serverIP, 4040);
@@ -85,7 +79,7 @@ public class NetworkSender {
         };
     }
     public Task<Respond> login(String username) {
-        return new Task<Respond>() {
+        return new Task<>() {
             @Override
             protected Respond call() throws Exception {
                 Socket socket = new Socket(serverIP, 4040);
@@ -112,8 +106,8 @@ public class NetworkSender {
             }
         };
     }
-    public Task<Respond> search(String username, String query, ArrayList<ServerFileData> fileList) {
-        return new Task<Respond>() {
+    public Task<Respond> search(String username, String query, ArrayList<ServerFileData> returnedFileList) {
+        return new Task<>() {
             @Override
             protected Respond call() throws Exception {
                 Socket socket = new Socket(serverIP, 4040);
@@ -136,14 +130,16 @@ public class NetworkSender {
                         short fileCount = istream.readShort();
 
                         for (short i = 0; i < fileCount; ++i) {
-                            String username = istream.readUTF(istream);
+                            String username = istream.readUTF();
+                            String userIP = istream.readUTF();
+                            boolean isOnline = istream.readBoolean();
                             long fileSize = istream.readLong();
-                            String filename = istream.readUTF(istream);
-                            String fileDescription = istream.readUTF(istream);
+                            String filename = istream.readUTF();
+                            String fileDescription = istream.readUTF();
                             Date uploadDate = new Date(istream.readLong());
 
-                            ServerFileData serverFileData = new ServerFileData(filename, fileSize, fileDescription, uploadDate, username);
-                            fileList.add(serverFileData);
+                            ServerFileData serverFileData = new ServerFileData(filename, fileSize, fileDescription, uploadDate, username, userIP, isOnline);
+                            returnedFileList.add(serverFileData);
                         }
                     }
 
@@ -157,7 +153,7 @@ public class NetworkSender {
         };
     }
     public Task<Respond> upload(String username, ClientFileData file) {
-        return new Task<Respond>() {
+        return new Task<>() {
             @Override
             protected Respond call() throws Exception {
                 Socket socket = new Socket(serverIP, 4040);
@@ -187,8 +183,8 @@ public class NetworkSender {
             }
         };
     }
-    public Task<Respond> reportMissingFile(String username, ClientFileData file) {
-        return new Task<Respond>() {
+    public Task<Respond> reportMissingFile(ServerFileData file) {
+        return new Task<>() {
             @Override
             protected Respond call() throws Exception {
                 Socket socket = new Socket(serverIP, 4040);
@@ -201,12 +197,55 @@ public class NetworkSender {
                 try {
                     // request
                     ostream.writeShort(messageType);
-                    ostream.writeUTF(username);
+                    ostream.writeUTF(file.getOwner());
                     ostream.writeUTF(file.getName());
 
                     // respond
                     Respond response = buildResponse(istream, messageType);
 
+                    socket.close();
+                    return response;
+                } catch (SocketTimeoutException e) {
+                    socket.close();
+                    throw new SocketTimeoutException("Request timed out");
+                }
+            }
+        };
+    }
+    public Task<Respond> requestFile(ServerFileData file, File savedFile) {
+        return new Task<>() {
+            @Override
+            protected Respond call() throws Exception {
+                Socket socket = new Socket(file.getOwnerIP(), 4041);
+                DataInputStream istream = new DataInputStream(socket.getInputStream());
+                DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
+
+                short messageType = 7;
+
+                socket.setSoTimeout(5000);
+                try {
+                    // request
+                    ostream.writeShort(messageType);
+                    ostream.writeUTF(file.getName());
+
+                    // respond
+                    Respond response = buildResponse(istream, messageType);
+                    if (response.isSuccess()) {
+                        FileOutputStream fileOutputStream = new FileOutputStream(savedFile);
+                        long size = istream.readLong();
+                        int bytes;
+                        byte[] buffer = new byte[4 * 1024];
+                        while (size > 0 && (bytes = istream.read(buffer, 0, (int)Math.min(buffer.length, size))) != -1) {
+                            fileOutputStream.write(buffer, 0, bytes);
+                            size -= bytes;
+                        }
+                        fileOutputStream.close();
+                    } else {
+                        Task<Respond> task = reportMissingFile(file);
+                        Thread t = new Thread(task);
+                        t.setDaemon(true);
+                        t.start();
+                    }
                     socket.close();
                     return response;
                 } catch (SocketTimeoutException e) {
