@@ -7,7 +7,7 @@ import java.io.File;
 public class LocalDatabase {
     private final Connection connection;
     public LocalDatabase() throws SQLException {
-        connection = DriverManager.getConnection("jdbc:sqlite:LocalFileData.db");
+        connection = DriverManager.getConnection("jdbc:sqlite:LocalDatabase.db");
         System.out.println("Connected to the database.");
         Statement statement = connection.createStatement();
         String createFileTable = "CREATE TABLE IF NOT EXISTS file_data (" +

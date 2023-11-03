@@ -57,18 +57,25 @@ public class NetworkSender {
                 Socket socket = new Socket(serverIP, 4040);
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
+                updateMessage("Connecting");
 
                 short messageType = 2;
 
                 socket.setSoTimeout(5000);
                 try {
                     // request
+                    updateProgress(20, 100);
+                    updateMessage("Sending request");
                     ostream.writeShort(messageType);
                     ostream.writeUTF(username);
 
                     // respond
+                    updateProgress(50, 100);
+                    updateMessage("Reading respond");
                     Respond response = buildResponse(istream, messageType);
 
+                    updateProgress(90, 100);
+                    updateMessage("Closing Connection");
                     socket.close();
                     return response;
                 } catch (SocketTimeoutException e) {
@@ -85,18 +92,25 @@ public class NetworkSender {
                 Socket socket = new Socket(serverIP, 4040);
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
+                updateMessage("Connecting");
 
                 short messageType = 1;
 
                 socket.setSoTimeout(5000);
                 try {
                     // request
+                    updateProgress(20, 100);
+                    updateMessage("Sending request");
                     ostream.writeShort(messageType);
                     ostream.writeUTF(username);
 
                     // respond
+                    updateProgress(50, 100);
+                    updateMessage("Reading respond");
                     Respond response = buildResponse(istream, messageType);
 
+                    updateProgress(90, 100);
+                    updateMessage("Closing Connection");
                     socket.close();
                     return response;
                 } catch (SocketTimeoutException e) {
@@ -113,17 +127,22 @@ public class NetworkSender {
                 Socket socket = new Socket(serverIP, 4040);
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
+                updateMessage("Connecting");
 
                 short messageType = 4;
 
                 socket.setSoTimeout(5000);
                 try {
                     // request
+                    updateProgress(20, 100);
+                    updateMessage("Sending request");
                     ostream.writeShort(messageType);
                     ostream.writeUTF(username);
                     ostream.writeUTF(query);
 
                     // respond
+                    updateProgress(50, 100);
+                    updateMessage("Reading respond");
                     Respond respond = buildResponse(istream, messageType);
 
                     if (respond.isSuccess()) {
@@ -140,9 +159,12 @@ public class NetworkSender {
 
                             ServerFileData serverFileData = new ServerFileData(filename, fileSize, fileDescription, uploadDate, username, userIP, isOnline);
                             returnedFileList.add(serverFileData);
+                            updateProgress(0.5 + (i/fileCount)*0.4, 1.0);
                         }
                     }
 
+                    updateProgress(90, 100);
+                    updateMessage("Closing Connection");
                     socket.close();
                     return respond;
                 } catch (SocketTimeoutException e) {
@@ -159,21 +181,32 @@ public class NetworkSender {
                 Socket socket = new Socket(serverIP, 4040);
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
+                updateMessage("Connecting");
 
                 short messageType = 3;
 
                 socket.setSoTimeout(5000);
                 try {
                     // request
+                    updateProgress(20, 100);
+                    updateMessage("Sending request");
                     ostream.writeShort(messageType);
+                    updateProgress(30, 100);
                     ostream.writeUTF(username);
+                    updateProgress(40, 100);
                     ostream.writeLong(file.getSize());
+                    updateProgress(50, 100);
                     ostream.writeUTF(file.getName());
+                    updateProgress(60, 100);
                     ostream.writeUTF(file.getDescription());
 
                     // respond
+                    updateProgress(70, 100);
+                    updateMessage("Reading respond");
                     Respond response = buildResponse(istream, messageType);
 
+                    updateProgress(90, 100);
+                    updateMessage("Closing Connection");
                     socket.close();
                     return response;
                 } catch (SocketTimeoutException e) {
@@ -190,19 +223,26 @@ public class NetworkSender {
                 Socket socket = new Socket(serverIP, 4040);
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
+                updateMessage("Connecting");
 
                 short messageType = 5;
 
                 socket.setSoTimeout(5000);
                 try {
                     // request
+                    updateProgress(20, 100);
+                    updateMessage("Sending request");
                     ostream.writeShort(messageType);
                     ostream.writeUTF(file.getOwner());
                     ostream.writeUTF(file.getName());
 
                     // respond
+                    updateProgress(50, 100);
+                    updateMessage("Reading respond");
                     Respond response = buildResponse(istream, messageType);
 
+                    updateProgress(90, 100);
+                    updateMessage("Closing Connection");
                     socket.close();
                     return response;
                 } catch (SocketTimeoutException e) {
@@ -219,26 +259,37 @@ public class NetworkSender {
                 Socket socket = new Socket(file.getOwnerIP(), 4041);
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
+                updateMessage("Connecting");
 
                 short messageType = 7;
 
                 socket.setSoTimeout(5000);
                 try {
                     // request
+                    updateProgress(20, 100);
+                    updateMessage("Sending request");
                     ostream.writeShort(messageType);
                     ostream.writeUTF(file.getName());
 
                     // respond
+                    updateProgress(50, 100);
+                    updateMessage("Reading respond");
                     Respond response = buildResponse(istream, messageType);
                     if (response.isSuccess()) {
+                        updateProgress(100, 100);
+                        updateMessage("File found, downloading");
                         FileOutputStream fileOutputStream = new FileOutputStream(savedFile);
+                        updateProgress(0.0, 1.0);
                         long size = istream.readLong();
+                        long maxSize = size;
                         int bytes;
                         byte[] buffer = new byte[4 * 1024];
                         while (size > 0 && (bytes = istream.read(buffer, 0, (int)Math.min(buffer.length, size))) != -1) {
                             fileOutputStream.write(buffer, 0, bytes);
                             size -= bytes;
+                            updateProgress(1 - ((double) size /maxSize), 1.0);
                         }
+                        updateMessage("Saving file");
                         fileOutputStream.close();
                     } else {
                         Task<Respond> task = reportMissingFile(file);
@@ -246,6 +297,9 @@ public class NetworkSender {
                         t.setDaemon(true);
                         t.start();
                     }
+
+                    updateProgress(90, 100);
+                    updateMessage("Closing Connection");
                     socket.close();
                     return response;
                 } catch (SocketTimeoutException e) {

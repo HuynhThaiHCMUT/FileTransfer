@@ -21,6 +21,8 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class MainController {
@@ -109,7 +111,7 @@ public class MainController {
             serverIP = database.getServerIP();
             userFile = FXCollections.observableArrayList(database.getFileData());
         } catch (SQLException e) {
-            databaseError("Can't connect to database");
+            errorDialog("Database", "Can't connect to database");
             e.printStackTrace();
             System.err.println(e.getClass().getName() + ": " + e.getMessage());
             System.exit(0);
@@ -117,12 +119,8 @@ public class MainController {
 
         sender = new NetworkSender();
         listener = new NetworkListener(database, output);
-        try {
-            listener.start();
-        } catch (IOException e) {
-            output.appendText("Failed to start listener: " + e.getMessage() + "\n");
-            e.printStackTrace();
-        }
+        listener.start();
+        output.appendText("Type help for a list of command\n");
 
         if (username == null || serverIP == null) {
             authScreen();
@@ -175,30 +173,7 @@ public class MainController {
                             File savedFile = chooser.showSaveDialog((filePanel.getScene().getWindow()));
 
                             if (savedFile != null) {
-                                Task<Respond> task = sender.requestFile(selectedFile, savedFile);
-                                task.setOnSucceeded(ev -> {
-                                    finishTask();
-                                    if (task.getValue().isSuccess()) {
-                                        try {
-                                            if (database.existFile(savedFile.getName()) == null)
-                                                upload(new ClientFileData(savedFile.getName(), selectedFile.getSize(), selectedFile.getDescription(), savedFile.getAbsolutePath()));
-                                            else databaseError("Upload failed, you already have a file with that name");
-                                        } catch (SQLException e) {
-                                            databaseError(e.getMessage());
-                                            e.printStackTrace();
-                                        }
-                                    } else {
-                                        savedFile.delete();
-                                        downloadError("File doesn't exist");
-                                    }
-                                });
-                                task.setOnFailed(ev -> {
-                                    finishTask();
-                                    savedFile.delete();
-                                    downloadError(task.getException().getMessage());
-                                    task.getException().printStackTrace();
-                                });
-                                startTask(task);
+                                download(selectedFile, savedFile);
                             }
                         }
                     });
@@ -272,7 +247,7 @@ public class MainController {
         task.setOnFailed(event -> {
             finishTask();
             if (!userPanel.isVisible()) authScreen();
-            serverError(task.getException().getMessage());
+            errorDialog("Server", task.getException().getMessage());
             task.getException().printStackTrace();
         });
 
@@ -331,11 +306,11 @@ public class MainController {
         ok.addEventFilter(ActionEvent.ACTION, event -> {
             try {
                 if (database.existFile(nameField.getText()) != null) {
-                    databaseError("File with that name already exist");
+                    errorDialog("Database", "File with that name already exist");
                     event.consume();
                 }
             } catch (SQLException e) {
-                databaseError(e.getMessage());
+                errorDialog("Database", e.getMessage());
                 e.printStackTrace();
             }
         });
@@ -363,9 +338,10 @@ public class MainController {
             task.setOnSucceeded(event -> {
                 finishTask();
                 if (!task.getValue().isSuccess()) {
-                    serverError(task.getValue().getMessage());
+                    errorDialog("Server", task.getValue().getMessage());
                 } else {
                     userFile.add(file);
+                    output.appendText("Upload succeeded\n");
                 }
             });
             task.setOnFailed(event -> {
@@ -373,18 +349,46 @@ public class MainController {
                 try {
                     database.deleteFileData(file.getName());
                 } catch (SQLException e) {
-                    databaseError(e.getMessage());
+                    errorDialog("Database", e.getMessage());
                     e.printStackTrace();
                 }
-                serverError(task.getException().getMessage());
+                errorDialog("Server", task.getException().getMessage());
                 task.getException().printStackTrace();
             });
             startTask(task);
         }
         catch (SQLException e) {
-            databaseError("Cannot insert file data to database");
+            errorDialog("Database", "Cannot insert file data to database");
             e.printStackTrace();
         }
+    }
+    private void download(ServerFileData selectedFile, File savedFile) {
+        Task<Respond> task = sender.requestFile(selectedFile, savedFile);
+        task.setOnSucceeded(ev -> {
+            finishTask();
+            if (task.getValue().isSuccess()) {
+                try {
+                    output.appendText("Download succeeded\n");
+                    if (database.existFile(savedFile.getName()) == null)
+                        upload(new ClientFileData(savedFile.getName(), selectedFile.getSize(), selectedFile.getDescription(), savedFile.getAbsolutePath()));
+                    else errorDialog("Database", "Upload failed, you already have a file with that name");
+                } catch (SQLException e) {
+                    errorDialog("Database", e.getMessage());
+                    e.printStackTrace();
+                }
+            } else {
+                savedFile.delete();
+                errorDialog("Download", "File doesn't exist");
+            }
+        });
+        task.setOnFailed(ev -> {
+            finishTask();
+            savedFile.delete();
+            errorDialog("Download", task.getException().getMessage());
+            task.getException().printStackTrace();
+        });
+        output.appendText("Downloading " + selectedFile.getName() + " from " + selectedFile.getOwner() + " as " + savedFile.getAbsolutePath() + "\n");
+        startTask(task);
     }
     @FXML
     protected void onLocalSearchClick() {
@@ -408,7 +412,7 @@ public class MainController {
         });
         task.setOnFailed(event -> {
             finishTask();
-            serverError(task.getException().getMessage());
+            errorDialog("Server", task.getException().getMessage());
             task.getException().printStackTrace();
         });
         startTask(task);
@@ -423,69 +427,94 @@ public class MainController {
         }
     }
     private String process(String cmd) {
-        String[] tokens = cmd.split("_");
-        if (tokens.length == 0) return null;
-        switch (tokens[0]) {
+        ArrayList<String> tokens = splitTokens(cmd);
+        if (tokens.isEmpty()) return null;
+        switch (tokens.get(0)) {
+            case "help":
+                return """
+                        Command format: command "parameter1" "parameter2" ...
+                        List of command:
+                        start: start the listener
+                        stop: stop the listener
+                        publish "local name" "upload name": upload a local file at <file name> as <upload name> to server
+                        fetch "file name": fetch a list of file available on server with name similar to <file name>
+                        download "index" "save location": download the file with the index <index> return from the fetch command to <save location> on your computer""";
             case "start":
                 if (listener.isStarted()) return "Listener already started";
-                try {
-                    listener.start();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    return ("Failed to start listener: " + e.getMessage());
-                }
+                listener.start();
                 return "Starting listener...";
-            /*
             case "publish":
-                if (tokens.length < 3) return "Not enough parameters";
-                File file = new File(tokens[2]);
+                if (tokens.size() != 3 && tokens.size() != 4) return "Incorrect parameter count";
+                File file = new File(tokens.get(1));
                 if (file.exists()) {
                     try {
-                        if (database.existFile(tokens[1]) == null) {
-                            ClientFileData fileData = new ClientFileData(tokens[1], file.length(), null, file.getAbsolutePath());
-                            try {
-                                database.insertFileData(fileData);
-                                Task<Respond> task = sender.upload(this.username, fileData);
-                                task.setOnSucceeded(event -> {
-                                    finishTask();
-                                    if (!task.getValue().isSuccess()) {
-                                        output.appendText(task.getValue().getMessage());
-                                    } else {
-                                        userFile.add(fileData);
-                                    }
-                                });
-                                task.setOnFailed(event -> {
-                                    finishTask();
-                                    try {
-                                        database.deleteFileData(file.getName());
-                                    } catch (SQLException e) {
-                                        output.appendText(e.getMessage());
-                                        e.printStackTrace();
-                                    }
-                                    output.appendText(task.getException().getMessage());
-                                    task.getException().printStackTrace();
-                                });
-                                startTask(task);
-                                return "Upload successful";
-                            }
-                            catch (SQLException e) {
-                                e.printStackTrace();
-                                return "Cannot insert file data to database";
-                            }
+                        if (database.existFile(tokens.get(2)) == null) {
+                            ClientFileData fileData = new ClientFileData(tokens.get(2), file.length(), (tokens.size() == 3 ? "" : tokens.get(3)), file.getAbsolutePath());
+                            upload(fileData);
+                            return null;
                         }
-                        else return "Upload failed, you already have a file with that name";
+                        return "Upload failed, you already have a file with that name";
                     } catch (SQLException e) {
                         e.printStackTrace();
                         return "Failed to upload file: " + e.getMessage();
                     }
                 }
                 return "File does not exist";
-                */
-            //TODO: Add more command
-
+            case "fetch":
+                if (tokens.size() != 2) return "Incorrect parameter count";
+                searchBar.setText(tokens.get(1));
+                onSearchClick();
+                if (searchResult == null || searchResult.isEmpty()) return "No file found";
+                output.appendText("File that match result: ");
+                for (int i = 0; i < searchResult.size(); i++) {
+                    output.appendText(i +
+                            " " + searchResult.get(i).getName() +
+                            " " + searchResult.get(i).getSize() +
+                            " " + searchResult.get(i).getDescription() +
+                            " " + searchResult.get(i).getUploadedDate().toString() +
+                            " " + searchResult.get(i).getOwner() +
+                            " " + (searchResult.get(i).isOnline() ? "Online" : "Offline") +"\n");
+                }
+                return null;
+            case "download":
+                if (tokens.size() != 3) return "Incorrect parameter count";
+                try {
+                    int i = Integer.parseInt(tokens.get(1));
+                    File savedFile = new File(tokens.get(2));
+                    if (!savedFile.createNewFile()) return "File already exist";
+                    download(searchResult.get(i), savedFile);
+                    return null;
+                } catch (NumberFormatException e) {
+                    return "File index is not a number";
+                } catch (IOException e) {
+                    return "Can not save file as " + tokens.get(2);
+                }
+            case "stop":
+                listener.stop();
+                return "Listener stopped";
             default:
                 return "Invalid command";
         }
+    }
+
+    public static ArrayList<String> splitTokens(String input) {
+        ArrayList<String> tokens = new ArrayList<>();
+
+        // Regular expression to match tokens with or without double quotes
+        Pattern pattern = Pattern.compile("([^\"]\\S*|\".+?\")\\s*");
+        Matcher matcher = pattern.matcher(input);
+
+        while (matcher.find()) {
+            String token = matcher.group(1);
+
+            // Remove double quotes if present
+            if (token.startsWith("\"") && token.endsWith("\"")) {
+                token = token.substring(1, token.length() - 1);
+            }
+
+            tokens.add(token);
+        }
+        return tokens;
     }
     /**
      * Switch to auth screen
@@ -521,32 +550,17 @@ public class MainController {
             database.setUser(username);
             database.setServerIP(serverIP);
         } catch (SQLException e) {
-            databaseError("Failed to saved login information");
+            errorDialog("Database","Failed to saved login information");
             e.printStackTrace();
         }
 
     }
-    private void databaseError(String reason) {
-        if (reason == null) reason = "Access denied or connection closed";
+    private void errorDialog(String errorType ,String reason) {
+        if (reason == null) reason = "Unidentified error";
+        output.appendText(errorType + " error: " + reason + "\n");
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Error");
-        alert.setHeaderText("Database error");
-        alert.setContentText(reason);
-        alert.showAndWait();
-    }
-    private void serverError(String reason) {
-        if (reason == null) reason = "Can't connect to server";
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText("Server error");
-        alert.setContentText(reason);
-        alert.showAndWait();
-    }
-    private void downloadError(String reason) {
-        if (reason == null) reason = "Can't connect to host";
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText("Download error");
+        alert.setHeaderText(errorType + " error");
         alert.setContentText(reason);
         alert.showAndWait();
     }

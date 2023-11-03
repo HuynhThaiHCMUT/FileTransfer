@@ -12,6 +12,7 @@ import java.util.ArrayList;
 public class NetworkListener {
     private final LocalDatabase database;
     private final TextArea output;
+    private ServerSocket socket;
     private boolean started;
 
     public NetworkListener(LocalDatabase database, TextArea output) {
@@ -19,8 +20,13 @@ public class NetworkListener {
         this.output = output;
         started = false;
     }
-    public void start() throws IOException {
-        ServerSocket socket = new ServerSocket(4041);
+    public void start() {
+        try {
+            socket = new ServerSocket(4041);
+        } catch (IOException e) {
+            e.printStackTrace();
+            output.appendText("Failed to start listener: " + e.getMessage() +"\n");
+        }
         Task<String> startTask = new Task<>() {
             @Override
             protected String call() throws Exception {
@@ -156,6 +162,13 @@ public class NetworkListener {
             }
             output.appendText("Error while handling request from " + clientIP + ": " + getException().getMessage() + "\n");
             getException().printStackTrace();
+        }
+    }
+    public void stop() {
+        try {
+            socket.close();
+        } catch (IOException e) {
+            output.appendText("Error while closing socket: " + e.getMessage());
         }
     }
 

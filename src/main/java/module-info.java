@@ -5,6 +5,7 @@ module com.computernetwork.filetransfer {
     requires org.controlsfx.controls;
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.bootstrapfx.core;
+    requires org.kordamp.ikonli.fontawesome;
     requires java.sql;
 
     opens com.computernetwork.filetransfer to javafx.fxml;
