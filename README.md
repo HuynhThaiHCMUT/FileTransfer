@@ -19,11 +19,11 @@
     <a href="#getting-started"><strong>Xem hướng dẫn »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/github_username/repo_name">Tải xuống</a>
+    <a href="#">Tải xuống</a>
     ·
-    <a href="https://github.com/github_username/repo_name/issues">Báo lỗi</a>
+    <a href="#">Báo lỗi</a>
     ·
-    <a href="https://github.com/github_username/repo_name/issues">Đề xuất tính năng</a>
+    <a href="#">Đề xuất tính năng</a>
   </p>
 </div>
 
