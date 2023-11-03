@@ -18,7 +18,7 @@
 <?import javafx.scene.text.Text?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/17.0.9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.computernetwork.filetransfer.MainController">
+<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.computernetwork.filetransfer.MainController">
   <columnConstraints>
     <ColumnConstraints hgrow="SOMETIMES" maxWidth="80.0" minWidth="80.0" prefWidth="80.0" />
     <ColumnConstraints hgrow="SOMETIMES" minWidth="100.0" />
@@ -72,9 +72,9 @@
                   </Text>
                </children>
             </VBox>
-            <VBox alignment="BOTTOM_CENTER" prefHeight="200.0" prefWidth="100.0">
+            <VBox alignment="BOTTOM_CENTER" prefHeight="200.0" prefWidth="100.0" VBox.vgrow="ALWAYS">
                <children>
-                  <Label fx:id="loadingMessage" visible="false" />
+                  <Label fx:id="loadingMessage" visible="false" wrapText="true" />
                   <ProgressBar fx:id="loadingProgress" prefWidth="200.0" progress="0.0" visible="false">
                      <VBox.margin>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
@@ -131,14 +131,29 @@
                   </TableView>
                </children>
             </VBox>
-            <Button defaultButton="true" mnemonicParsing="false" onMouseClicked="#onUploadClick" text="Upload">
-               <graphic>
-                  <FontIcon iconLiteral="fa-upload" />
-               </graphic>
-               <font>
-                  <Font size="16.0" />
-               </font>
-            </Button>
+            <HBox alignment="BOTTOM_RIGHT" VBox.vgrow="NEVER">
+               <children>
+                  <Button defaultButton="true" mnemonicParsing="false" onMouseClicked="#onRefreshClick" text="Refresh">
+                     <graphic>
+                        <FontIcon iconLiteral="fa-refresh" />
+                     </graphic>
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                     <HBox.margin>
+                        <Insets right="10.0" />
+                     </HBox.margin>
+                  </Button>
+                  <Button defaultButton="true" mnemonicParsing="false" onMouseClicked="#onUploadClick" text="Upload">
+                     <graphic>
+                        <FontIcon iconLiteral="fa-upload" />
+                     </graphic>
+                     <font>
+                        <Font size="16.0" />
+                     </font>
+                  </Button>
+               </children>
+            </HBox>
          </children>
          <padding>
             <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
@@ -174,7 +189,7 @@
                   <Insets top="10.0" />
                </VBox.margin>
                <children>
-                  <TableView fx:id="searchResultTable" prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
+                  <TableView fx:id="searchResultTable" style="-fx-background-color: transparent;" VBox.vgrow="ALWAYS">
                      <columns>
                         <TableColumn fx:id="searchResultColumn1" editable="false" prefWidth="200.0" text="File name" />
                         <TableColumn fx:id="searchResultColumn2" editable="false" minWidth="0.0" prefWidth="72.0" text="File size" />
@@ -182,9 +197,6 @@
                         <TableColumn fx:id="searchResultColumn4" prefWidth="160.0" text="Uploaded by" />
                         <TableColumn fx:id="searchResultColumn5" prefWidth="200.0" text="Description" />
                      </columns>
-                     <columnResizePolicy>
-                        <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" />
-                     </columnResizePolicy>
                   </TableView>
                </children>
             </VBox>

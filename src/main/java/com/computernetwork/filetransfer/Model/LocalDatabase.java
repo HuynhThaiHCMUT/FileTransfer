@@ -6,6 +6,7 @@ import java.io.File;
 
 public class LocalDatabase {
     private final Connection connection;
+
     public LocalDatabase() throws SQLException {
         connection = DriverManager.getConnection("jdbc:sqlite:LocalDatabase.db");
         System.out.println("Connected to the database.");
@@ -23,10 +24,12 @@ public class LocalDatabase {
         statement.execute(createUserTable);
         statement.execute(createServerIPTable);
     }
+
     public void close() throws SQLException {
         connection.close();
         System.out.println("Connection closed");
     }
+
     /**
      * return the name of the user in user_data, return null if there is none
      */
@@ -39,6 +42,7 @@ public class LocalDatabase {
         }
         return null;
     }
+
     /**
      * insert user into user_data table, replace the old user if they exist, return operation result
      */
@@ -49,6 +53,7 @@ public class LocalDatabase {
         insertStatement.setString(1, user);
         insertStatement.executeUpdate();
     }
+
     /**
      * return the serverIP address in server_IP_data, return null if there is none
      */
@@ -61,6 +66,7 @@ public class LocalDatabase {
         }
         return null;
     }
+
     /**
      * insert serverIP address into server_IP_data table, replace the old serverIP address if it exists, return operation result
      */
@@ -72,69 +78,12 @@ public class LocalDatabase {
         insertStatement.executeUpdate();
 
     }
-    /**
-     * return a list of file data saved in the file_data table
-     */
-    public ArrayList<ClientFileData> getFileData() throws SQLException {
-        ArrayList<ClientFileData> fileList = new ArrayList<>();
-        Statement statement = connection.createStatement();
-        ResultSet row = statement.executeQuery("SELECT * FROM file_data");
-        while(row.next()) {
-            String name = row.getString("name");
-            Long file_size = row.getLong("file_size");
-            String description = row.getString("description");
-            Date date = Date.valueOf(row.getString("date"));
-            String file_location = row.getString("file_location");
 
-            ClientFileData fileData = new ClientFileData(name, file_size, description, date, file_location);
-
-            fileList.add(fileData);
-        }
-        return fileList;
-    }
-    /**
-     * check if fileName already exist in the file_data table, return null if not, return the fileData otherwise
-     */
-    public ClientFileData existFile(String fileName) throws SQLException {
-        PreparedStatement ps = connection.prepareStatement("SELECT * FROM file_data WHERE name = ?");
-        ps.setString(1, fileName);
-        ResultSet row = ps.executeQuery();
-
-        if (!row.next()) return null;
-
-        String name = row.getString("name");
-        Long file_size = row.getLong("file_size");
-        String description = row.getString("description");
-        Date date = Date.valueOf(row.getString("date"));
-        String file_location = row.getString("file_location");
-
-        return new ClientFileData(name, file_size, description, date, file_location);
-    }
-    /**
-     * insert fileData into the file_data table
-     */
-    public void insertFileData(ClientFileData fileData) throws SQLException {
-        PreparedStatement ps = connection.prepareStatement("INSERT INTO file_data VALUES (?,?,?,?,?)");
-        ps.setString(1, fileData.getName());
-        ps.setLong(2, fileData.getSize());
-        ps.setString(3, fileData.getDescription());
-        ps.setString(4, fileData.getUploadedDate().toString());
-        ps.setString(5, fileData.getFileLocation());
-        
-        ps.executeUpdate();
-    }
-    /**
-     * delete fileData from the file_data table
-     */
-    public void deleteFileData(String fileName) throws SQLException {
-        PreparedStatement ps = connection.prepareStatement("DELETE FROM file_data WHERE name = ?");
-        ps.setString(1, fileName);
-        ps.executeUpdate();
-    }
     /**
      * go through the list of file and check their file location, delete them from the file_data table if they're no longer exist
+     * return the list
      */
-    public ArrayList<ClientFileData> checkFile() throws SQLException {
+    public ArrayList<ClientFileData> getFileData() throws SQLException {
         ArrayList<ClientFileData> fileList = new ArrayList<>();
         Statement statement = connection.createStatement();
         ResultSet row = statement.executeQuery("SELECT * FROM file_data");
@@ -155,5 +104,47 @@ public class LocalDatabase {
             }
         }
         return fileList;
+    }
+
+    /**
+     * check if fileName already exist in the file_data table, return null if not, return the fileData otherwise
+     */
+    public ClientFileData existFile(String fileName) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("SELECT * FROM file_data WHERE name = ?");
+        ps.setString(1, fileName);
+        ResultSet row = ps.executeQuery();
+
+        if (!row.next()) return null;
+
+        String name = row.getString("name");
+        Long file_size = row.getLong("file_size");
+        String description = row.getString("description");
+        Date date = Date.valueOf(row.getString("date"));
+        String file_location = row.getString("file_location");
+
+        return new ClientFileData(name, file_size, description, date, file_location);
+    }
+
+    /**
+     * insert fileData into the file_data table
+     */
+    public void insertFileData(ClientFileData fileData) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("INSERT INTO file_data VALUES (?,?,?,?,?)");
+        ps.setString(1, fileData.getName());
+        ps.setLong(2, fileData.getSize());
+        ps.setString(3, fileData.getDescription());
+        ps.setString(4, fileData.getUploadedDate().toString());
+        ps.setString(5, fileData.getFileLocation());
+
+        ps.executeUpdate();
+    }
+
+    /**
+     * delete fileData from the file_data table
+     */
+    public void deleteFileData(String fileName) throws SQLException {
+        PreparedStatement ps = connection.prepareStatement("DELETE FROM file_data WHERE name = ?");
+        ps.setString(1, fileName);
+        ps.executeUpdate();
     }
 }

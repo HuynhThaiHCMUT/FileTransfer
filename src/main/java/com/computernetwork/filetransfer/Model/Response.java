@@ -1,10 +1,10 @@
 package com.computernetwork.filetransfer.Model;
 
-public class Respond {
+public class Response {
     private boolean success;
     private String message;
 
-    public Respond(boolean success, String message) {
+    public Response(boolean success, String message) {
         this.success = success;
         this.message = message;
     }

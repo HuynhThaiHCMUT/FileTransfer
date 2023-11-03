@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 public class MainController {
     private LocalDatabase database;
     private NetworkSender sender;
@@ -77,7 +76,7 @@ public class MainController {
     @FXML
     private TableColumn<ClientFileData, String> userFileColumn1;
     @FXML
-    private TableColumn<ClientFileData, Long> userFileColumn2;
+    private TableColumn<ClientFileData, String> userFileColumn2;
     @FXML
     private TableColumn<ClientFileData, String> userFileColumn3;
     @FXML
@@ -87,7 +86,7 @@ public class MainController {
     @FXML
     private TableColumn<ServerFileData, String> searchResultColumn1;
     @FXML
-    private TableColumn<ServerFileData, Long> searchResultColumn2;
+    private TableColumn<ServerFileData, String> searchResultColumn2;
     @FXML
     private TableColumn<ServerFileData, String> searchResultColumn3;
     @FXML
@@ -132,18 +131,20 @@ public class MainController {
 
         //Set up userFile table
         userFileTable.setPlaceholder(new Text("You haven't uploaded any file"));
+        userFileTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
         userFileTable.setItems(filteredData);
         userFileColumn1.setCellValueFactory(new PropertyValueFactory<>("name"));
-        userFileColumn2.setCellValueFactory(new PropertyValueFactory<>("size"));
+        userFileColumn2.setCellValueFactory(value -> new SimpleStringProperty(value.getValue().formattedFileSize()));
         userFileColumn3.setCellValueFactory(value -> new SimpleStringProperty(value.getValue().getUploadedDate().toString()));
         userFileColumn4.setCellValueFactory(new PropertyValueFactory<>("fileLocation"));
         userFileColumn5.setCellValueFactory(new PropertyValueFactory<>("description"));
 
         //Set up searchResult table
         searchResultTable.setPlaceholder(new Text("No result"));
+        searchResultTable.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
         searchResultTable.setItems(searchResult);
         searchResultColumn1.setCellValueFactory(new PropertyValueFactory<>("name"));
-        searchResultColumn2.setCellValueFactory(new PropertyValueFactory<>("size"));
+        searchResultColumn2.setCellValueFactory(value -> new SimpleStringProperty(value.getValue().formattedFileSize()));
         searchResultColumn3.setCellValueFactory(value -> new SimpleStringProperty(value.getValue().getUploadedDate().toString()));
         searchResultColumn4.setCellValueFactory(new PropertyValueFactory<>("owner"));
         searchResultColumn5.setCellValueFactory(new PropertyValueFactory<>("description"));
@@ -156,31 +157,32 @@ public class MainController {
                 if (item == null || empty) {
                     setStyle("");
                 } else {
-                    setOnMouseClicked(event -> {
-                        if (event.getClickCount() == 2 && !isEmpty()) {
-                            ServerFileData selectedFile = getItem();
-                            String fileExtension = "";
-
-                            int lastDotIndex = selectedFile.getName().lastIndexOf('.');
-                            if (lastDotIndex > 0 && lastDotIndex < selectedFile.getName().length() - 1) {
-                                fileExtension = selectedFile.getName().substring(lastDotIndex);
-                            }
-
-                            FileChooser chooser = new FileChooser();
-                            chooser.setTitle("Select file to upload");
-                            chooser.setInitialFileName(selectedFile.getName());
-                            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(fileExtension, "*" + fileExtension));
-                            File savedFile = chooser.showSaveDialog((filePanel.getScene().getWindow()));
-
-                            if (savedFile != null) {
-                                download(selectedFile, savedFile);
-                            }
-                        }
-                    });
                     if (item.isOnline()) {
                         setStyle("-fx-text-background-color: green;");
+                        setOnMouseClicked(event -> {
+                            if (event.getClickCount() == 2 && !isEmpty()) {
+                                ServerFileData selectedFile = getItem();
+                                String fileExtension = "";
+
+                                int lastDotIndex = selectedFile.getName().lastIndexOf('.');
+                                if (lastDotIndex > 0 && lastDotIndex < selectedFile.getName().length() - 1) {
+                                    fileExtension = selectedFile.getName().substring(lastDotIndex);
+                                }
+
+                                FileChooser chooser = new FileChooser();
+                                chooser.setTitle("Save as");
+                                chooser.setInitialFileName(selectedFile.getName());
+                                chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(fileExtension, "*" + fileExtension));
+                                File savedFile = chooser.showSaveDialog((filePanel.getScene().getWindow()));
+
+                                if (savedFile != null) {
+                                    download(selectedFile, savedFile);
+                                }
+                            }
+                        });
                     } else {
                         setStyle("-fx-text-background-color: red;");
+                        setOnMouseClicked(event -> errorDialog("Download", "User is offline"));
                     }
                 }
             }
@@ -228,11 +230,13 @@ public class MainController {
     }
     @FXML
     protected void onSignOutClick() {
+        usernameInput.setText(username);
+        serverIPInput.setText(serverIP);
         authScreen();
     }
     protected void auth(boolean signUp) {
         sender.setServerIP(serverIP);
-        Task<Respond> task = signUp ? sender.signUp(username) : sender.login(username);
+        Task<Response> task = signUp ? sender.signUp(username) : sender.login(username);
 
         task.setOnSucceeded(event -> {
             if (task.getValue().isSuccess()) {
@@ -252,6 +256,24 @@ public class MainController {
         });
 
         startTask(task);
+    }
+    @FXML
+    protected void onRefreshClick() {
+        try {
+            userFile = FXCollections.observableArrayList(database.getFileData());
+            filteredData = new FilteredList<>(userFile, file -> {
+                if (localSearchBar.getText() == null || localSearchBar.getText().isEmpty()) {
+                    return true;
+                }
+                String lowerCaseFilter = localSearchBar.getText().toLowerCase();
+
+                return file.getName().toLowerCase().contains(lowerCaseFilter);
+            });
+            userFileTable.setItems(filteredData);
+        } catch (SQLException e) {
+            errorDialog("Database", "Error getting file from database");
+            e.printStackTrace();
+        }
     }
     @FXML
     protected void onUploadClick() {
@@ -283,7 +305,7 @@ public class MainController {
         fileExtensionField.setTranslateY(5);
 
         box.getChildren().add(new Label("File location: " + filePath));
-        box.getChildren().add(new Label("File size: " + ClientFileData.formatFileSize(selectedFile.length()) + " (" + selectedFile.length() + ") bytes"));
+        box.getChildren().add(new Label("File size: " + ClientFileData.formatFileSize(selectedFile.length()) + " (" + selectedFile.length() + " bytes)"));
         box.getChildren().add(new Label("Name:"));
         box.getChildren().add(nameBox);
         box.getChildren().add(new Label("Description:"));
@@ -305,7 +327,7 @@ public class MainController {
         final Button ok = (Button) dialog.getDialogPane().lookupButton(okButton);
         ok.addEventFilter(ActionEvent.ACTION, event -> {
             try {
-                if (database.existFile(nameField.getText()) != null) {
+                if (database.existFile(nameField.getText() + fileExtensionField.getText()) != null) {
                     errorDialog("Database", "File with that name already exist");
                     event.consume();
                 }
@@ -334,7 +356,7 @@ public class MainController {
     private void upload(ClientFileData file) {
         try {
             database.insertFileData(file);
-            Task<Respond> task = sender.upload(this.username, file);
+            Task<Response> task = sender.upload(this.username, file);
             task.setOnSucceeded(event -> {
                 finishTask();
                 if (!task.getValue().isSuccess()) {
@@ -356,26 +378,17 @@ public class MainController {
                 task.getException().printStackTrace();
             });
             startTask(task);
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             errorDialog("Database", "Cannot insert file data to database");
             e.printStackTrace();
         }
     }
     private void download(ServerFileData selectedFile, File savedFile) {
-        Task<Respond> task = sender.requestFile(selectedFile, savedFile);
+        Task<Response> task = sender.requestFile(selectedFile, savedFile);
         task.setOnSucceeded(ev -> {
             finishTask();
             if (task.getValue().isSuccess()) {
-                try {
-                    output.appendText("Download succeeded\n");
-                    if (database.existFile(savedFile.getName()) == null)
-                        upload(new ClientFileData(savedFile.getName(), selectedFile.getSize(), selectedFile.getDescription(), savedFile.getAbsolutePath()));
-                    else errorDialog("Database", "Upload failed, you already have a file with that name");
-                } catch (SQLException e) {
-                    errorDialog("Database", e.getMessage());
-                    e.printStackTrace();
-                }
+                output.appendText("Download succeeded\n");
             } else {
                 savedFile.delete();
                 errorDialog("Download", "File doesn't exist");
@@ -404,11 +417,24 @@ public class MainController {
     @FXML
     protected void onSearchClick() {
         ArrayList<ServerFileData> fileList = new ArrayList<>();
-        Task<Respond> task = sender.search(username, searchBar.getText(), fileList);
+        Task<Response> task = sender.search(username, searchBar.getText(), fileList);
         task.setOnSucceeded(event -> {
             finishTask();
             searchResult = FXCollections.observableArrayList(fileList);
             searchResultTable.setItems(searchResult);
+            if (searchResult == null || searchResult.isEmpty()) output.appendText("No file found\n");
+            else {
+                output.appendText("File that match result: \n");
+                for (int i = 0; i < searchResult.size(); i++) {
+                    output.appendText(i +
+                            " " + searchResult.get(i).getName() +
+                            " " + searchResult.get(i).getSize() +
+                            " " + searchResult.get(i).getDescription() +
+                            " " + searchResult.get(i).getUploadedDate().toString() +
+                            " " + searchResult.get(i).getOwner() +
+                            " " + (searchResult.get(i).isOnline() ? "Online" : "Offline") +"\n");
+                }
+            }
         });
         task.setOnFailed(event -> {
             finishTask();
@@ -434,15 +460,19 @@ public class MainController {
                 return """
                         Command format: command "parameter1" "parameter2" ...
                         List of command:
-                        start: start the listener
-                        stop: stop the listener
-                        publish "local name" "upload name": upload a local file at <file name> as <upload name> to server
-                        fetch "file name": fetch a list of file available on server with name similar to <file name>
-                        download "index" "save location": download the file with the index <index> return from the fetch command to <save location> on your computer""";
+                        > start: start the network listener
+                        > stop: stop the network listener
+                        > clear: clear the command-line output
+                        > publish "local name" "upload name" "description": upload a local file at <local name> as <upload name> to server
+                        > fetch "file name": fetch a list of file available on server with name similar to <file name>
+                        > download "index" "save location": download the file with the index <index> return from the fetch command to <save location> on your computer""";
             case "start":
                 if (listener.isStarted()) return "Listener already started";
                 listener.start();
                 return "Starting listener...";
+            case "clear":
+                output.clear();
+                return null;
             case "publish":
                 if (tokens.size() != 3 && tokens.size() != 4) return "Incorrect parameter count";
                 File file = new File(tokens.get(1));
@@ -464,36 +494,29 @@ public class MainController {
                 if (tokens.size() != 2) return "Incorrect parameter count";
                 searchBar.setText(tokens.get(1));
                 onSearchClick();
-                if (searchResult == null || searchResult.isEmpty()) return "No file found";
-                output.appendText("File that match result: ");
-                for (int i = 0; i < searchResult.size(); i++) {
-                    output.appendText(i +
-                            " " + searchResult.get(i).getName() +
-                            " " + searchResult.get(i).getSize() +
-                            " " + searchResult.get(i).getDescription() +
-                            " " + searchResult.get(i).getUploadedDate().toString() +
-                            " " + searchResult.get(i).getOwner() +
-                            " " + (searchResult.get(i).isOnline() ? "Online" : "Offline") +"\n");
-                }
                 return null;
             case "download":
                 if (tokens.size() != 3) return "Incorrect parameter count";
+                File savedFile = null;
                 try {
                     int i = Integer.parseInt(tokens.get(1));
-                    File savedFile = new File(tokens.get(2));
-                    if (!savedFile.createNewFile()) return "File already exist";
+                    savedFile = new File(tokens.get(2));
+                    if (!savedFile.createNewFile()) return "Can't save file as " + tokens.get(2);
                     download(searchResult.get(i), savedFile);
                     return null;
                 } catch (NumberFormatException e) {
                     return "File index is not a number";
                 } catch (IOException e) {
                     return "Can not save file as " + tokens.get(2);
+                } catch (IndexOutOfBoundsException e) {
+                    savedFile.delete();
+                    return "Index out of bound";
                 }
             case "stop":
                 listener.stop();
                 return "Listener stopped";
             default:
-                return "Invalid command";
+                return "Invalid command: " + tokens.get(0);
         }
     }
 
@@ -501,14 +524,16 @@ public class MainController {
         ArrayList<String> tokens = new ArrayList<>();
 
         // Regular expression to match tokens with or without double quotes
-        Pattern pattern = Pattern.compile("([^\"]\\S*|\".+?\")\\s*");
+        Pattern pattern = Pattern.compile("([^\"]\\S*|\"*\\S*\")\\s*");
         Matcher matcher = pattern.matcher(input);
 
         while (matcher.find()) {
             String token = matcher.group(1);
 
+            //Special case
+            if (token.equals("\"")) tokens.add("");
             // Remove double quotes if present
-            if (token.startsWith("\"") && token.endsWith("\"")) {
+            else if (token.startsWith("\"") && token.endsWith("\"")) {
                 token = token.substring(1, token.length() - 1);
             }
 

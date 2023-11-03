@@ -15,8 +15,8 @@ public class NetworkSender {
     }
 
     //helper function
-    private Respond buildResponse(DataInputStream istream, short messageType) throws IOException {
-        Respond response = new Respond(false, null);
+    private Response buildResponse(DataInputStream istream, short messageType) throws IOException {
+        Response response = new Response(false, null);
         short statusCode = istream.readShort();
 
         if (statusCode == 200) {
@@ -50,10 +50,10 @@ public class NetworkSender {
         return response;
     }
 
-    public Task<Respond> signUp(String username) {
+    public Task<Response> signUp(String username) {
         return new Task<>() {
             @Override
-            protected Respond call() throws Exception {
+            protected Response call() throws Exception {
                 Socket socket = new Socket(serverIP, 4040);
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
@@ -72,7 +72,7 @@ public class NetworkSender {
                     // respond
                     updateProgress(50, 100);
                     updateMessage("Reading respond");
-                    Respond response = buildResponse(istream, messageType);
+                    Response response = buildResponse(istream, messageType);
 
                     updateProgress(90, 100);
                     updateMessage("Closing Connection");
@@ -85,10 +85,10 @@ public class NetworkSender {
             }
         };
     }
-    public Task<Respond> login(String username) {
+    public Task<Response> login(String username) {
         return new Task<>() {
             @Override
-            protected Respond call() throws Exception {
+            protected Response call() throws Exception {
                 Socket socket = new Socket(serverIP, 4040);
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
@@ -107,7 +107,7 @@ public class NetworkSender {
                     // respond
                     updateProgress(50, 100);
                     updateMessage("Reading respond");
-                    Respond response = buildResponse(istream, messageType);
+                    Response response = buildResponse(istream, messageType);
 
                     updateProgress(90, 100);
                     updateMessage("Closing Connection");
@@ -120,10 +120,10 @@ public class NetworkSender {
             }
         };
     }
-    public Task<Respond> search(String username, String query, ArrayList<ServerFileData> returnedFileList) {
+    public Task<Response> search(String username, String query, ArrayList<ServerFileData> returnedFileList) {
         return new Task<>() {
             @Override
-            protected Respond call() throws Exception {
+            protected Response call() throws Exception {
                 Socket socket = new Socket(serverIP, 4040);
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
@@ -140,12 +140,12 @@ public class NetworkSender {
                     ostream.writeUTF(username);
                     ostream.writeUTF(query);
 
-                    // respond
+                    // response
                     updateProgress(50, 100);
-                    updateMessage("Reading respond");
-                    Respond respond = buildResponse(istream, messageType);
+                    updateMessage("Reading response");
+                    Response response = buildResponse(istream, messageType);
 
-                    if (respond.isSuccess()) {
+                    if (response.isSuccess()) {
                         short fileCount = istream.readShort();
 
                         for (short i = 0; i < fileCount; ++i) {
@@ -166,7 +166,7 @@ public class NetworkSender {
                     updateProgress(90, 100);
                     updateMessage("Closing Connection");
                     socket.close();
-                    return respond;
+                    return response;
                 } catch (SocketTimeoutException e) {
                     socket.close();
                     throw new SocketTimeoutException("Request timed out");
@@ -174,10 +174,10 @@ public class NetworkSender {
             }
         };
     }
-    public Task<Respond> upload(String username, ClientFileData file) {
+    public Task<Response> upload(String username, ClientFileData file) {
         return new Task<>() {
             @Override
-            protected Respond call() throws Exception {
+            protected Response call() throws Exception {
                 Socket socket = new Socket(serverIP, 4040);
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
@@ -203,7 +203,7 @@ public class NetworkSender {
                     // respond
                     updateProgress(70, 100);
                     updateMessage("Reading respond");
-                    Respond response = buildResponse(istream, messageType);
+                    Response response = buildResponse(istream, messageType);
 
                     updateProgress(90, 100);
                     updateMessage("Closing Connection");
@@ -216,10 +216,10 @@ public class NetworkSender {
             }
         };
     }
-    public Task<Respond> reportMissingFile(ServerFileData file) {
+    public Task<Response> reportMissingFile(ServerFileData file) {
         return new Task<>() {
             @Override
-            protected Respond call() throws Exception {
+            protected Response call() throws Exception {
                 Socket socket = new Socket(serverIP, 4040);
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
@@ -239,7 +239,7 @@ public class NetworkSender {
                     // respond
                     updateProgress(50, 100);
                     updateMessage("Reading respond");
-                    Respond response = buildResponse(istream, messageType);
+                    Response response = buildResponse(istream, messageType);
 
                     updateProgress(90, 100);
                     updateMessage("Closing Connection");
@@ -252,10 +252,10 @@ public class NetworkSender {
             }
         };
     }
-    public Task<Respond> requestFile(ServerFileData file, File savedFile) {
+    public Task<Response> requestFile(ServerFileData file, File savedFile) {
         return new Task<>() {
             @Override
-            protected Respond call() throws Exception {
+            protected Response call() throws Exception {
                 Socket socket = new Socket(file.getOwnerIP(), 4041);
                 DataInputStream istream = new DataInputStream(socket.getInputStream());
                 DataOutputStream ostream = new DataOutputStream(socket.getOutputStream());
@@ -274,7 +274,7 @@ public class NetworkSender {
                     // respond
                     updateProgress(50, 100);
                     updateMessage("Reading respond");
-                    Respond response = buildResponse(istream, messageType);
+                    Response response = buildResponse(istream, messageType);
                     if (response.isSuccess()) {
                         updateProgress(100, 100);
                         updateMessage("File found, downloading");
@@ -292,7 +292,7 @@ public class NetworkSender {
                         updateMessage("Saving file");
                         fileOutputStream.close();
                     } else {
-                        Task<Respond> task = reportMissingFile(file);
+                        Task<Response> task = reportMissingFile(file);
                         Thread t = new Thread(task);
                         t.setDaemon(true);
                         t.start();

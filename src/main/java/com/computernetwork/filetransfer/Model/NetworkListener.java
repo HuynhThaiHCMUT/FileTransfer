@@ -90,16 +90,16 @@ public class NetworkListener {
                     if (username.equals(database.getUser())) {
                         ostream.writeShort(200);
                         return clientIP + " sent a ping request for " + username +"\n" +
-                                "Correct user, ping returned\n";
+                                "Correct user, successful ping returned\n";
                     } else {
                         ostream.writeShort(401);
                         return clientIP + " sent a ping request for " + username +"\n" +
-                                "Incorrect user, ping returned\n";
+                                "Incorrect user, failed ping returned\n";
                     }
                 case 6:
                     if (username.equals(database.getUser())) {
                         ostream.writeShort(200);
-                        ArrayList<ClientFileData> result = database.checkFile();
+                        ArrayList<ClientFileData> result = database.getFileData();
                         ostream.writeShort(result.size());
                         for (ClientFileData file: result) {
                             ostream.writeLong(file.getSize());

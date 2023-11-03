@@ -76,4 +76,19 @@ public class ServerFileData {
     public void setOnline(boolean online) {
         isOnline = online;
     }
+
+    public String formattedFileSize() {
+        if (size < 1024) {
+            return size + " B";
+        } else if (size < 1024 * 1024) {
+            double sizeInKB = size / 1024.0;
+            return String.format("%.2f KB", sizeInKB);
+        } else if (size < 1024 * 1024 * 1024) {
+            double sizeInMB = size / (1024.0 * 1024);
+            return String.format("%.2f MB", sizeInMB);
+        } else {
+            double sizeInGB = size / (1024.0 * 1024 * 1024);
+            return String.format("%.2f GB", sizeInGB);
+        }
+    }
 }
