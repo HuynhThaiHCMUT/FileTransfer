@@ -99,11 +99,11 @@ Cài đặt Java tại đây: [Java Downloads](https://www.oracle.com/java/techn
 <a id="installation"></a>
 ### Cài đặt
 
-<!-- TODO: add installation steps -->
-1. 
-2. 
-3. 
-4. 
+
+1. Truy cập đường dẫn sau: [Download FileTransfer](#) <!-- TODO: add installation location -->
+2. Tải về file nén "Source code"
+3. Giải nén 
+4. Nhấn đúp vào FileTransfer.exe để bắt đầu sử dụng
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -116,13 +116,81 @@ Cài đặt Java tại đây: [Java Downloads](https://www.oracle.com/java/techn
 
 ## Hướng dẫn sử dụng
 
-<!-- TODO: add manual document -->
+### Một số lưu ý
+
+- Để sử dụng ứng dụng này, bạn cần có một kết nối internet ổn định.
+- Trước khi sử dụng, bạn cần đăng nhập vào ứng dụng hoặc đăng ký nếu chưa có tài khoản
+
+  - Các bước đăng ký:
+
+    1. Điền thông tin username cho tài khoản mới tại ô "Username"
+    2. Điền địa chỉ IP của server cần kết nối tại ô "Server IP"
+    3. Nhấn vào "Sign up"
+
+  - Các bước đăng nhập:
+
+    1. Điền thông tin username của tài khoản tại ô "Username"
+    2. Điền địa chỉ IP của server cần kết nối tại ô "Server IP"
+    3. Nhấn vào "Log in"
+
+### Thao tác trong ứng dụng
+
+Bạn có thể sử dụng ứng dụng này thông qua giao diện GUI hoặc CLI.
+
+#### Sử dụng giao diện GUI
+
+Giao diện sau khi đăng nhập gồm có các tab sau: User, File, Search và Terminal. Trong đó 3 tab đầu cung cấp giao diện GUI cho người dùng.
+
+- User: Nhấn vào "Sign out" nếu bạn cần đăng xuất
+
+- File: Đây là nơi hiển thị các file mà bạn đã đăng tải lên server.
+
+  - Tìm kiếm: Nhập tên file vào thanh "Search" để tìm kiếm file.
+
+- Search: Đây là nơi hiển thị các file có sẵn trên server. Bạn có thể đăng tải file lên server hoặc tải xuống file từ server tại đây
+
+  - Tìm kiếm: Nhập tên file vào thanh "Search" để tìm kiếm file.
+
+  - Đăng tải file: 
+  
+    - Nhấn vào "Upload" ở phía dưới bên phải để đăng tải file.
+
+    - Chọn file từ máy của bạn trong hộp thoại "Select file to upload"
+
+    - Màn hình sẽ hiển thị hộp thoại để nhập thông tin file. Bạn cần điền tên file khi lưu trên server và mô tả (tùy chọn) để tiếp tục.
+
+    - Nhấn "OK" để hoàn tất.
+
+  - Tải xuống file:
+
+    - Nhấn đúp vào một file trong danh sách file được hiển thị
+
+    - Chọn nơi để lưu file trong hộp thoại "Save as"
+
+    - Nhấn "OK" để hoàn tất
+
+#### Sử dụng giao diện CLI
+
+Bạn có thể thao tác bằng CLI thông qua tab "Terminal". Giao diện này cung cấp các lệnh như sau:
+
+| Cú pháp | Chức năng | Mô tả | Ví dụ |
+|-|-|-|-|
+| `help`  | Trợ giúp | Hiển thị danh sách các lệnh có sẵn cùng với cú pháp và cách sử dụng, dùng trong trường hợp bạn quên | | |
+| `start` | Khởi động Network Listener    | Lệnh để test | |
+| `stop`  | Tạm dừng Network Listener     | Lệnh để test | |
+| `clear` | Xóa toàn bộ nội dung terminal | Terminal sẽ được reset lại như ban đầu | |
+| `publish "<local name>" "<upload name>"` |  Đăng tải file | Thay `<local name>` bằng đường dẫn tới file cần đăng, thay `<upload name>` bằng tên của file đó khi lưu trên server | `publish "D:\abc.txt" "xyz.txt"` |
+| `fetch "<filename>"` | Tìm kiếm file | Liệt kê danh sách file có tên chứa chuỗi `<filename>`, mỗi file hiển thị sẽ có index tương ứng | `fetch "xy"` |
+| `download "<index>" "<save location>"` | Tải xuống file | Thay `<index>` bằng giá trị index có được từ lệnh `fetch` tương ứng với file cần tải, thay `<save location>` bằng đường dẫn tới nơi lưu file cần tải | `download "0" "D:\"` |
+
+### Lỗi có thể xảy ra khi sử dụng
+
+<!-- TODO: add error cases -->
 ...
 
 ..
 
 .
-
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
