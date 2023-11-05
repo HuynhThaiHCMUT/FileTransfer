@@ -124,6 +124,8 @@ public class MainController {
         if (username == null || serverIP == null) {
             authScreen();
         } else {
+            usernameInput.setText(username);
+            serverIPInput.setText(serverIP);
             auth(false);
         }
 
@@ -182,7 +184,9 @@ public class MainController {
                         });
                     } else {
                         setStyle("-fx-text-background-color: red;");
-                        setOnMouseClicked(event -> errorDialog("Download", "User is offline"));
+                        setOnMouseClicked(event -> {
+                            if (event.getClickCount() == 2 && !isEmpty()) errorDialog("Download", "User is offline");
+                        });
                     }
                 }
             }
@@ -500,17 +504,17 @@ public class MainController {
                 File savedFile = null;
                 try {
                     int i = Integer.parseInt(tokens.get(1));
+                    ServerFileData selectedFile = searchResult.get(i);
                     savedFile = new File(tokens.get(2));
                     if (!savedFile.createNewFile()) return "Can't save file as " + tokens.get(2);
-                    download(searchResult.get(i), savedFile);
+                    download(selectedFile, savedFile);
                     return null;
                 } catch (NumberFormatException e) {
                     return "File index is not a number";
+                } catch (IndexOutOfBoundsException e) {
+                    return "Index out of bound";
                 } catch (IOException e) {
                     return "Can not save file as " + tokens.get(2);
-                } catch (IndexOutOfBoundsException e) {
-                    savedFile.delete();
-                    return "Index out of bound";
                 }
             case "stop":
                 listener.stop();
@@ -524,16 +528,16 @@ public class MainController {
         ArrayList<String> tokens = new ArrayList<>();
 
         // Regular expression to match tokens with or without double quotes
-        Pattern pattern = Pattern.compile("([^\"]\\S*|\"*\\S*\")\\s*");
+        Pattern pattern = Pattern.compile("([^\"]\\S*[^\"]|\"([^\"]*)\")\\s*");
         Matcher matcher = pattern.matcher(input);
 
         while (matcher.find()) {
             String token = matcher.group(1);
 
-            //Special case
-            if (token.equals("\"")) tokens.add("");
+            // Trim token
+            token = token.trim();
             // Remove double quotes if present
-            else if (token.startsWith("\"") && token.endsWith("\"")) {
+            if (token.startsWith("\"") && token.endsWith("\"")) {
                 token = token.substring(1, token.length() - 1);
             }
 
