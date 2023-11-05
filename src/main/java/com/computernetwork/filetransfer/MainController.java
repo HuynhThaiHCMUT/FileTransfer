@@ -264,6 +264,10 @@ public class MainController {
     @FXML
     protected void onRefreshClick() {
         try {
+            Task<Response> task = sender.checkFile(username);
+            Thread t = new Thread(task);
+            t.setDaemon(true);
+            t.start();
             userFile = FXCollections.observableArrayList(database.getFileData());
             filteredData = new FilteredList<>(userFile, file -> {
                 if (localSearchBar.getText() == null || localSearchBar.getText().isEmpty()) {

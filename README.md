@@ -68,7 +68,7 @@
 
 ## Về dự án này
 
-Ứng dụng này được hiện thực để phục vụ cho môn học Mạng máy tính, thuộc về Trường Đại học Bách khoa, ĐHQG TP.HCM. Dự án hướng đến mục tiêu xây dựng nên một hệ thống chia sẻ file dựa theo kiến trúc kết hợp giữa Client-Server và Peer-to-Peer, nhằm tối ưu hóa hiệu suất của hệ thống. Ứng dụng này dành cho phía Client, người có thể đăng tải file lên server và tải xuống các file từ server.
+Ứng dụng này được hiện thực để phục vụ cho môn học Mạng máy tính, thuộc về Trường Đại học Bách khoa, ĐHQG TP.HCM. Dự án hướng đến mục tiêu xây dựng nên một hệ thống chia sẻ file dựa theo kiến trúc kết hợp giữa Client-Server và Peer-to-Peer, nhằm tối ưu hóa hiệu suất của hệ thống. Ứng dụng này dành cho phía Client, người có thể đăng tải file lên server và tải xuống các file từ các client khác.
 
 Link dự án: 
 
@@ -99,9 +99,9 @@ Link dự án:
 <a id="prerequisites"></a>
 ### Điều kiện
 
-Để sử dụng ứng dụng này, bạn cần cài đặt ngôn ngữ Java phiên bản mới nhất.
+Hiện tại, ứng dụng chỉ có bản tập tin thực thi trên nền tảng Windows
 
-Cài đặt Java tại đây: [Java Downloads](https://www.oracle.com/java/technologies/downloads).
+Source code của ứng dụng được phát triển sử dụng JDK 17 của Bellsoft Liberica và được xây dựng bằng Apache Maven
 
 <a id="installation"></a>
 ### Cài đặt
@@ -150,11 +150,11 @@ Bạn có thể sử dụng ứng dụng này thông qua giao diện GUI hoặc 
 
 Giao diện sau khi đăng nhập gồm có các tab sau: User, File, Search và Terminal. Trong đó 3 tab đầu cung cấp giao diện GUI cho người dùng.
 
-- User: Nhấn vào "Sign out" nếu bạn cần đăng xuất.
+- User: Hiển thị thông tin đăng nhập của bạn. Nhấn vào "Sign out" nếu bạn cần đăng xuất.
 
 - File: Đây là nơi hiển thị các file mà bạn đã đăng tải lên server. Bạn có thể đăng tải file lên server tại đây.
 
-  - Tìm kiếm: Nhập tên file vào thanh "Search" để tìm kiếm file.
+  - Tìm kiếm: Nhập tên file vào thanh "Search" rồi nhấn nút để tìm kiếm file.
 
   - Đăng tải file: 
   
@@ -176,6 +176,8 @@ Giao diện sau khi đăng nhập gồm có các tab sau: User, File, Search và
 
     - Nhấn đúp vào một file trong danh sách file được hiển thị
 
+    - Nếu người dùng đăng tải file đó đang không online (dòng thông tin file hiển thị chữ đỏ), hệ thống sẽ báo lỗi "Người dùng không online". Nếu người dùng đó đang online (dòng thông tin file hiển thị chữ xanh lá), hộp thoại Save as sẽ xuất hiện.
+
     - Chọn nơi để lưu file trong hộp thoại "Save as"
 
     - Nhấn "OK" để hoàn tất
@@ -184,26 +186,23 @@ Giao diện sau khi đăng nhập gồm có các tab sau: User, File, Search và
 
 Bạn có thể thao tác bằng CLI thông qua tab "Terminal". Giao diện này cung cấp các lệnh như sau:
 
-| Cú pháp | Chức năng | Mô tả | Ví dụ |
-|-|-|-|-|
-| `help`  | Trợ giúp | Hiển thị danh sách các lệnh có sẵn cùng với cú pháp và cách sử dụng, dùng trong trường hợp bạn quên | | |
-| `start` | Khởi động Network Listener    | Lệnh để test | |
-| `stop`  | Tạm dừng Network Listener     | Lệnh để test | |
-| `clear` | Xóa toàn bộ nội dung terminal | Terminal sẽ được reset lại như ban đầu | |
-| `publish "<local name>" "<upload name>"` |  Đăng tải file | Thay `<local name>` bằng đường dẫn tới file cần đăng, thay `<upload name>` bằng tên của file đó khi lưu trên server | `publish "D:\abc.txt" "xyz.txt"` |
-| `fetch "<filename>"` | Tìm kiếm file | Liệt kê danh sách file có tên (có bao gồm extension) chứa chuỗi `<filename>`, mỗi file hiển thị sẽ có index tương ứng | `fetch "xy"` |
+| Cú pháp | Chức năng | Mô tả                                                                                                                                                                              | Ví dụ |
+|-|-|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-|
+| `help`  | Trợ giúp | Hiển thị danh sách các lệnh có sẵn cùng với cú pháp và cách sử dụng                                                                                                                | | |
+| `start` | Khởi động Network Listener    | Lệnh để khởi động Network Listener, một tác vụ chạy nền để xử lí các yêu cầu server và các client khác gửi đến bạn                                                                 | |
+| `stop`  | Tạm dừng Network Listener     | Lệnh để tắt Network Listener, server và các client khác sẽ không thể gửi yêu cầu cho bạn                                                                                           | |
+| `clear` | Xóa toàn bộ nội dung terminal | Màn hình hiển thị của Terminal sẽ được reset lại như ban đầu                                                                                                                       | |
+| `publish "<local name>" "<upload name>"` |  Đăng tải file | Thay `<local name>` bằng đường dẫn tới file cần đăng, thay `<upload name>` bằng tên của file đó khi lưu trên server                                                                | `publish "D:\abc.txt" "xyz.txt"` |
+| `fetch "<filename>"` | Tìm kiếm file | Liệt kê danh sách file có tên (có bao gồm extension) chứa chuỗi `<filename>`, mỗi file hiển thị sẽ có index tương ứng                                                              | `fetch "xy"` |
 | `download "<index>" "<save location>"` | Tải xuống file | Thay `<index>` bằng giá trị index có được từ lệnh `fetch` tương ứng với file cần tải, thay `<save location>` bằng đường dẫn tới nơi lưu file cần tải (có bao gồm tên file khi lưu) | `download "0" "D:\local-name.txt"` |
 
 <a id="errors"></a>
 
 ### Lỗi có thể xảy ra khi sử dụng
 
-<!-- TODO: add error cases -->
-...
-
-..
-
-.
+- Server error: Các lỗi có thể gặp trong khi hệ thống kết nối đến server
+- Database error: Các lỗi có thể gặp trong khi hệ thống viết, đọc dữ liệu vào cơ sở dữ liệu cục bộ
+- Download error: Các lỗi có thể gặp trong khi giao tiếp với các client khác để gửi, nhận file
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -218,9 +217,9 @@ Bạn có thể thao tác bằng CLI thông qua tab "Terminal". Giao diện này
 
 Thành viên của dự án:
 
-- Đinh Huỳnh Thái
-- Lê Thanh Tùng 
-- Nguyễn Thị Xuân Hoa
+- Đinh Huỳnh Thái - thai.dinhhuynh@hcmut.edu.vn
+- Lê Thanh Tùng - thanhtunga52021@gmail.com
+- Nguyễn Thị Xuân Hoa - nguyenhoacujut2003@gmail.com
 - Ngô Văn Phương - phuong.ngo0320@hcmut.edu.vn
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -235,6 +234,6 @@ Thành viên của dự án:
 ## Tài liệu tham khảo
 
 * Kurose, J. and Ross, K. (2022). _Computer Networking: a top-down approach, 8th edition_. Boston: Pearson Education Limited.
-* [JDK21 Documentation](https://docs.oracle.com/en/java/javase/21)
+* [JavaFX Documentation](https://openjfx.io)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

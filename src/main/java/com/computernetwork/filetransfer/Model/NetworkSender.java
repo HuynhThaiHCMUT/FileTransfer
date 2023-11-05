@@ -216,7 +216,7 @@ public class NetworkSender {
             }
         };
     }
-    public Task<Response> reportMissingFile(ServerFileData file) {
+    public Task<Response> checkFile(String username) {
         return new Task<>() {
             @Override
             protected Response call() throws Exception {
@@ -233,8 +233,7 @@ public class NetworkSender {
                     updateProgress(20, 100);
                     updateMessage("Sending request");
                     ostream.writeShort(messageType);
-                    ostream.writeUTF(file.getOwner());
-                    ostream.writeUTF(file.getName());
+                    ostream.writeUTF(username);
 
                     // respond
                     updateProgress(50, 100);
@@ -292,7 +291,7 @@ public class NetworkSender {
                         updateMessage("Saving file");
                         fileOutputStream.close();
                     } else {
-                        Task<Response> task = reportMissingFile(file);
+                        Task<Response> task = checkFile(file.getOwner());
                         Thread t = new Thread(task);
                         t.setDaemon(true);
                         t.start();
