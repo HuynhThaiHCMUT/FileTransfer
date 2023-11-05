@@ -8,7 +8,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/HuynhThaiHCMUT/FileTransfer">
-    <img src="hcmut.png" alt="Logo" width="80" height="80">
+    <img src="hcmut.png" alt="Logo" width="160" height="160">
   </a>
 
 <h3 align="center">File Sharing Application</h3>
@@ -19,11 +19,11 @@
     <a href="#getting-started"><strong>Xem hướng dẫn »</strong></a>
     <br />
     <br />
-    <a href="#">Tải xuống</a>
+    <a href="https://github.com/HuynhThaiHCMUT/FileTransfer/releases/tag/v1.0.0">Tải xuống</a>
     ·
-    <a href="#">Báo lỗi</a>
+    <a href="mailto:phuong.ngo0320@hcmut.edu.vn">Báo lỗi</a>
     ·
-    <a href="#">Đề xuất tính năng</a>
+    <a href="mailto:phuong.ngo0320@hcmut.edu.vn">Đề xuất tính năng</a>
   </p>
 </div>
 
@@ -46,7 +46,14 @@
         <li><a href="#installation">Cài đặt</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Hướng dẫn sử dụng</a></li>
+    <li>
+      <a href="#usage">Hướng dẫn sử dụng</a>
+      <ul>
+        <li><a href="#notes">Một số lưu ý</a></li>
+        <li><a href="#functions">Thao tác trong ứng dụng</a></li>
+        <li><a href="#errors">Lỗi có thể xảy ra khi sử dụng</a></li>
+      </ul>
+    </li>
     <li><a href="#contact">Liên hệ</a></li>
     <li><a href="#acknowledgments">Tài liệu tham khảo</a></li>
   </ol>
@@ -92,18 +99,16 @@ Link dự án:
 <a id="prerequisites"></a>
 ### Điều kiện
 
-Để sử dụng ứng dụng này, bạn cần cài đặt trước ngôn ngữ Java phiên bản mới nhất.
+Để sử dụng ứng dụng này, bạn cần cài đặt ngôn ngữ Java phiên bản mới nhất.
 
-Cài đặt Java tại đây: [Java Downloads](https://www.oracle.com/java/technologies/downloads/).
+Cài đặt Java tại đây: [Java Downloads](https://www.oracle.com/java/technologies/downloads).
 
 <a id="installation"></a>
 ### Cài đặt
 
-
-1. Truy cập đường dẫn sau: [Download FileTransfer](#) <!-- TODO: add installation location -->
-2. Tải về file nén "Source code"
-3. Giải nén 
-4. Nhấn đúp vào FileTransfer.exe để bắt đầu sử dụng
+1. Truy cập đường dẫn sau: [Download FileTransfer](https://github.com/HuynhThaiHCMUT/FileTransfer/releases/tag/v1.0.0)
+2. Tải về file `FileTransfer.exe`
+3. Nhấn đúp vào `FileTransfer.exe` để bắt đầu sử dụng
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -115,6 +120,8 @@ Cài đặt Java tại đây: [Java Downloads](https://www.oracle.com/java/techn
 <a id="usage"></a>
 
 ## Hướng dẫn sử dụng
+
+<a id="notes"></a>
 
 ### Một số lưu ý
 
@@ -132,6 +139,8 @@ Cài đặt Java tại đây: [Java Downloads](https://www.oracle.com/java/techn
     1. Điền thông tin username của tài khoản tại ô "Username"
     2. Điền địa chỉ IP của server cần kết nối tại ô "Server IP"
     3. Nhấn vào "Log in"
+
+<a id="functions"></a>
 
 ### Thao tác trong ứng dụng
 
@@ -180,8 +189,10 @@ Bạn có thể thao tác bằng CLI thông qua tab "Terminal". Giao diện này
 | `stop`  | Tạm dừng Network Listener     | Lệnh để test | |
 | `clear` | Xóa toàn bộ nội dung terminal | Terminal sẽ được reset lại như ban đầu | |
 | `publish "<local name>" "<upload name>"` |  Đăng tải file | Thay `<local name>` bằng đường dẫn tới file cần đăng, thay `<upload name>` bằng tên của file đó khi lưu trên server | `publish "D:\abc.txt" "xyz.txt"` |
-| `fetch "<filename>"` | Tìm kiếm file | Liệt kê danh sách file có tên chứa chuỗi `<filename>`, mỗi file hiển thị sẽ có index tương ứng | `fetch "xy"` |
-| `download "<index>" "<save location>"` | Tải xuống file | Thay `<index>` bằng giá trị index có được từ lệnh `fetch` tương ứng với file cần tải, thay `<save location>` bằng đường dẫn tới nơi lưu file cần tải | `download "0" "D:\"` |
+| `fetch "<filename>"` | Tìm kiếm file | Liệt kê danh sách file có tên (có bao gồm extension) chứa chuỗi `<filename>`, mỗi file hiển thị sẽ có index tương ứng | `fetch "xy"` |
+| `download "<index>" "<save location>"` | Tải xuống file | Thay `<index>` bằng giá trị index có được từ lệnh `fetch` tương ứng với file cần tải, thay `<save location>` bằng đường dẫn tới nơi lưu file cần tải (có bao gồm tên file khi lưu) | `download "0" "D:\local-name.txt"` |
+
+<a id="errors"></a>
 
 ### Lỗi có thể xảy ra khi sử dụng
 
@@ -221,7 +232,7 @@ Thành viên của dự án:
 
 ## Tài liệu tham khảo
 
-* Kurose, J. and Ross, K. (2017). _Computer Networking: a top-down approach, 7th edition_. Boston: Pearson Education Limited.
+* Kurose, J. and Ross, K. (2022). _Computer Networking: a top-down approach, 8th edition_. Boston: Pearson Education Limited.
 * [JDK21 Documentation](https://docs.oracle.com/en/java/javase/21)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
