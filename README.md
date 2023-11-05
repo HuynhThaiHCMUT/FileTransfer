@@ -150,13 +150,9 @@ Bạn có thể sử dụng ứng dụng này thông qua giao diện GUI hoặc 
 
 Giao diện sau khi đăng nhập gồm có các tab sau: User, File, Search và Terminal. Trong đó 3 tab đầu cung cấp giao diện GUI cho người dùng.
 
-- User: Nhấn vào "Sign out" nếu bạn cần đăng xuất
+- User: Nhấn vào "Sign out" nếu bạn cần đăng xuất.
 
-- File: Đây là nơi hiển thị các file mà bạn đã đăng tải lên server.
-
-  - Tìm kiếm: Nhập tên file vào thanh "Search" để tìm kiếm file.
-
-- Search: Đây là nơi hiển thị các file có sẵn trên server. Bạn có thể đăng tải file lên server hoặc tải xuống file từ server tại đây
+- File: Đây là nơi hiển thị các file mà bạn đã đăng tải lên server. Bạn có thể đăng tải file lên server tại đây.
 
   - Tìm kiếm: Nhập tên file vào thanh "Search" để tìm kiếm file.
 
@@ -169,6 +165,12 @@ Giao diện sau khi đăng nhập gồm có các tab sau: User, File, Search và
     - Màn hình sẽ hiển thị hộp thoại để nhập thông tin file. Bạn cần điền tên file khi lưu trên server và mô tả (tùy chọn) để tiếp tục.
 
     - Nhấn "OK" để hoàn tất.
+
+  - Refresh: Trong trường hợp bạn thay đổi tên hoặc đường dẫn tới file mà bạn đã đăng, file sẽ tự động bị xóa khỏi server. Bạn có thể nhấn "Refresh" để cập nhật lại danh sách file sau thao tác trên.
+
+- Search: Đây là nơi hiển thị các file có sẵn trên server. Bạn có thể tải xuống file từ server tại đây.
+
+  - Tìm kiếm: Nhập tên file vào thanh "Search" để tìm kiếm file.
 
   - Tải xuống file:
 
