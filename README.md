@@ -19,7 +19,7 @@
     <a href="#getting-started"><strong>Xem hướng dẫn »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/HuynhThaiHCMUT/FileTransfer/releases/tag/v1.0.0">Tải xuống</a>
+    <a href="https://github.com/HuynhThaiHCMUT/FileTransfer/releases">Tải xuống</a>
     ·
     <a href="mailto:phuong.ngo0320@hcmut.edu.vn">Báo lỗi</a>
     ·
@@ -106,7 +106,7 @@ Cài đặt Java tại đây: [Java Downloads](https://www.oracle.com/java/techn
 <a id="installation"></a>
 ### Cài đặt
 
-1. Truy cập đường dẫn sau: [Download FileTransfer](https://github.com/HuynhThaiHCMUT/FileTransfer/releases/tag/v1.0.0)
+1. Truy cập đường dẫn sau: [Download FileTransfer](https://github.com/HuynhThaiHCMUT/FileTransfer/releases)
 2. Tải về file `FileTransfer.exe`
 3. Nhấn đúp vào `FileTransfer.exe` để bắt đầu sử dụng
 
